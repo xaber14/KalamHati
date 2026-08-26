@@ -29,7 +29,7 @@
     {
       dow: 'Minggu', dd: '6', mm: 'SEP 2026',
       title: 'Ya Allah, Kenapa Hidupku Gini-Gini Aja?',
-      people: ['Ustaz Munawir Ngacir', 'Ustazah Yati Priyati'],
+      people: ['Ustaz Taufiqurrahman', 'Ustazah Yati Priyati'],
       venue: 'Masjid Baitussalam The Green BSD City, Tangerang',
       venueShort: 'Masjid Baitussalam, BSD City',
       address: 'The Green BSD City, Jl. Letnan Sutopo, Lengkong Gudang, Serpong, Tangerang Selatan 15310',
@@ -288,6 +288,20 @@
 </svg>`;
   }
 
+  /* Foto asli narasumber Jadwal Kajian — dipakai menggantikan avatarSVG
+     placeholder di mana pun namanya muncul (kartu kajian & modal
+     pendaftaran). Narasumber yang belum punya foto tetap pakai placeholder. */
+  const PERSON_PHOTO = {
+    'Muhammad Assad': 'asset/circle_Muhammad Assad.png',
+    'Ustazah Yati Priyati': 'asset/circle_Ustazah Yati Priyati.png',
+    'Habib Nabiel Al Musawa': 'asset/circle_habib.png',
+    'Ustaz Taufiqurrahman': 'asset/circle_Ustaz Taufiqurrahman.png'
+  };
+  function personAvatar(name, seed) {
+    const photo = PERSON_PHOTO[name];
+    return photo ? `<img src="${photo}" alt="" loading="lazy">` : avatarSVG(seed);
+  }
+
   /* ======================================================================
      3. RENDER
      ====================================================================== */
@@ -312,7 +326,7 @@
         <span class="kj-meta">
           <span class="kj-people">
             ${k.people.map((p, n) => `
-              <span class="who"><i class="av">${avatarSVG(i * 2 + n)}</i>${p}</span>`).join('')}
+              <span class="who"><i class="av">${personAvatar(p, i * 2 + n)}</i>${p}</span>`).join('')}
           </span>
           <span class="kj-line"><i class="ph-fill ph-map-pin"></i>${k.venue}</span>
           <span class="kj-line"><i class="ph ph-clock"></i>${k.time}</span>
@@ -701,7 +715,7 @@
        narasumber → lokasi masjid → tanggal (hari, bulan penuh, jam). */
     $('#modalSub').innerHTML =
       `<span class="kj-people">
-         ${k.people.map((p, n) => `<span class="who"><i class="av">${avatarSVG(i * 2 + n)}</i>${p}</span>`).join('')}
+         ${k.people.map((p, n) => `<span class="who"><i class="av">${personAvatar(p, i * 2 + n)}</i>${p}</span>`).join('')}
        </span>
        <span class="kj-line"><i class="ph-fill ph-map-pin"></i>${k.venue}</span>
        <span class="kj-line"><i class="ph-fill ph-calendar-dots"></i>${k.dow}, ${k.dd} ${monthFull} ${year} • ${k.time}</span>`;
