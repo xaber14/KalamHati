@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kalam Hati — Insyaallah Sampai ke Hati | KompasTV</title>
+<meta name="description" content="Kalam Hati, program religi Islami yang menyentuh sisi manusiawi tiap insan. Dipandu Dude Herlino bersama Ustaz & Ustazah tanah air, setiap Minggu pkl. 13:00 di KompasTV." />
+
+<!-- Font tunggal: Plus Jakarta Sans -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+
+<!-- Phosphor Icons — https://phosphoricons.com/ -->
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
+
+<link rel="stylesheet" href="style.css" />
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+
+<div class="scroll-progress"><span id="scrollBar"></span></div>
+
+<!-- ============ 0. NAVBAR (tidak diubah) ============ -->
+<header class="navbar" id="navbar">
+  <nav class="nav-inner" aria-label="Menu utama">
+    <ul class="nav-menu" id="navMenu">
+      <li><a href="#beranda" class="nav-link is-active" data-target="beranda">Beranda</a></li>
+      <li><a href="#jadwal-kajian" class="nav-link" data-target="jadwal-kajian">Jadwal Kajian</a></li>
+      <li><a href="#pusat-media" class="nav-link" data-target="pusat-media">Pusat Media</a></li>
+      <li><a href="#mari-berinteraksi" class="nav-link" data-target="mari-berinteraksi">Mari Berinteraksi</a></li>
+      <span class="nav-pill" id="navPill" aria-hidden="true"></span>
+    </ul>
+
+    <!-- Waktu sholat berjalan & berikutnya (zona WIB / Jakarta) -->
+    <aside class="prayer-strip" aria-label="Waktu sholat Jakarta">
+      <span class="ps-icon"><i class="ph-fill ph-mosque"></i></span>
+      <div class="ps-body">
+        <p class="ps-now">Sekarang waktu <b id="psCurrent">—</b></p>
+        <p class="ps-next">
+          Berikutnya <b id="psNext">—</b>
+          <span class="ps-dot"></span><span id="psNextTime">—</span>
+          <span class="ps-dot"></span><span id="psCountdown">—</span>
+        </p>
+      </div>
+      <span class="ps-zone">WIB<small>Jakarta</small></span>
+    </aside>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ 1. HERO (Figma 9:181) ============ -->
+<section class="hero" id="beranda">
+
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-photo"></div>
+    <div class="hero-wash"></div>
+    <div class="hero-pattern"></div>
+    <div class="hero-rays"></div>
+    <div class="hero-glow hero-glow--1" data-parallax="0.07"></div>
+    <div class="hero-glow hero-glow--2" data-parallax="-0.05"></div>
+  </div>
+
+  <div class="hero-stage">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="hero-logo reveal" data-reveal-delay="0">
+          <img src="asset/LOGO KALAM HATI.png" alt="Kalam Hati" id="heroLogo" />
+        </div>
+
+        <div class="hero-text">
+          <h1 class="hero-headline reveal" data-reveal-delay="120">InsyaAllah Sampai ke Hati</h1>
+          <p class="hero-sub reveal" data-reveal-delay="420">
+            Program religi Islami yang menyentuh sisi manusiawi tiap insan untuk memperoleh
+            pencerahan, ketenangan, serta inspirasi untuk semakin mendekatkan diri kepada Allah SWT
+          </p>
+        </div>
+
+        <div class="hero-cta reveal" data-reveal-delay="520">
+          <a href="#jadwal-kajian" class="btn btn-fig btn-fig-primary magnetic">
+            <span>Jadwal Kajian</span><em class="btn-shine" aria-hidden="true"></em>
+          </a>
+          <a href="#mari-berinteraksi" class="btn btn-fig btn-fig-outline magnetic">
+            <span>Interaksi Umat</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Komposisi narasumber — tiap orang aset terpisah, diposisikan mengikuti
+         koordinat Figma (node 45:59, frame 874×672). Urutan tumpukan dari
+         belakang ke depan: glow → Dude → Yati → ustazah → Abeey → Assad. -->
+    <div class="hero-asset">
+      <div class="hero-asset-float" role="img"
+           aria-label="Dude Herlino bersama Ustaz Muhammad Assad, Ustazah Yati Priyati, dan para ustaz serta ustazah pembawa kajian Kalam Hati">
+        <span class="hero-glow-wrap"><img src="asset/hero-glow.svg" alt="" /></span>
+        <img class="hp hp--dude"     src="asset/hero-dude.png"     alt="" />
+        <img class="hp hp--yati"     src="asset/hero-yati.png"     alt="" />
+        <img class="hp hp--ustazah2" src="asset/hero-ustazah2.png" alt="" />
+        <img class="hp hp--abeey"    src="asset/hero-abeey.png"    alt="" />
+        <img class="hp hp--assad"    src="asset/hero-assad.png"    alt="" />
+        <img class="hero-caption"    src="asset/Teks Pelengkap.png" alt="" />
+      </div>
+    </div>
+  </div>
+
+  <div class="host-note">
+    <span class="host-note-head">Dipandu oleh</span>
+    <span class="host-note-body">
+      <strong>Dude Herlino</strong><br />
+      bersama Ustaz &amp; Ustazah tanah air<br />
+      setiap hari Minggu, pukul 13:00 di KompasTV
+    </span>
+  </div>
+
+  <!-- cakrawala: lengkung putih menuju section berikutnya -->
+  <div class="horizon horizon--light" aria-hidden="true"></div>
+</section>
+
+
+<!-- ============ 2. JADWAL KAJIAN (Figma 16:368) ============ -->
+<section class="section section-kajian" id="jadwal-kajian">
+  <div class="sec-deco" aria-hidden="true">
+    <span class="kajian-glow kajian-glow--1" data-parallax="0.05"></span>
+    <span class="kajian-glow kajian-glow--2" data-parallax="-0.04"></span>
+    <span class="horizon horizon--plum"></span>
+  </div>
+
+  <div class="shell">
+    <header class="sec-head reveal">
+      <p class="eyebrow">AGENDA</p>
+      <h2 class="sec-title">Jadwal Kajian</h2>
+      <p class="sec-desc">Catat tanggalnya, hadir langsung atau saksikan di layar kaca.
+        Pilih salah satu jadwal untuk melihat lokasi acaranya pada peta.</p>
+    </header>
+
+    <div class="kajian-grid">
+      <div class="kajian-list" id="kajianList"><!-- diisi script.js --></div>
+
+      <aside class="kajian-panel reveal" data-reveal-delay="120">
+        <div class="panel-map">
+          <iframe id="kajianMap" title="Peta lokasi kajian" loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        </div>
+        <div class="panel-body">
+          <p class="panel-eyebrow">LOKASI KAJIAN</p>
+          <h3 id="mapVenue">—</h3>
+          <p class="panel-addr" id="mapAddress">—</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-fig btn-fig-primary btn-block magnetic" data-open-daftar>
+            <span>Daftar Sekarang</span>
+          </button>
+          <a class="btn btn-fig btn-fig-outline btn-block" id="mapDirections" href="#" target="_blank" rel="noopener">
+            <span>Cek Maps</span>
+          </a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ 3. PUSAT MEDIA (Figma 19:874) ============ -->
+<section class="section section-media" id="pusat-media">
+  <div class="media-bg" aria-hidden="true"></div>
+  <div class="media-pattern" aria-hidden="true"></div>
+
+  <div class="shell">
+    <header class="sec-head sec-head--onplum reveal">
+      <p class="eyebrow">KONTEN</p>
+      <h2 class="sec-title sec-title--gold">Pusat Media Kalam Hati</h2>
+    </header>
+
+    <!-- Episode Terbaru -->
+    <div class="block">
+      <div class="block-head reveal">
+        <div>
+          <h3>Episode Terbaru</h3>
+          <p>Tayangan penuh dari episode terakhir Kalam Hati.</p>
+        </div>
+        <a href="https://www.youtube.com/@kalamhatikompastv/streams" target="_blank" rel="noopener" class="see-all">
+          LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="episode-grid">
+        <article class="ep-main reveal" data-reveal-delay="60" id="epMain">
+          <div class="ep-main-art" id="epMainArt"></div>
+          <div class="ep-main-body">
+            <span class="live-badge"><em></em> TAYANG ULANG</span>
+            <h4 id="epMainTitle"></h4>
+            <div class="ep-meta">
+              <span class="who" id="epMainWho"><i class="av" data-av="1"></i></span>
+              <span class="dot"></span>
+              <span><i class="ph ph-calendar-blank"></i> <span id="epMainDate"></span></span>
+              <span class="dot"></span>
+              <span><i class="ph ph-clock"></i> <span id="epMainTime"></span></span>
+            </div>
+          </div>
+        </article>
+
+        <div class="ep-list" id="epList"><!-- diisi script.js --></div>
+      </div>
+    </div>
+
+    <!-- Konten Harian -->
+    <div class="block">
+      <div class="block-head reveal">
+        <div>
+          <h3>Konten Harian</h3>
+          <p>Cuplikan pilihan dari Instagram dan TikTok Kalam Hati.</p>
+        </div>
+        <button type="button" class="see-all" data-open-platform>
+          LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
+        </button>
+      </div>
+      <div class="daily-grid" id="dailyGrid"><!-- diisi script.js --></div>
+    </div>
+
+    <!-- Berita Hari Ini -->
+    <div class="block">
+      <div class="block-head reveal">
+        <div>
+          <h3>Berita Hari Ini</h3>
+          <p>Artikel seputar Kalam Hati dari redaksi KompasTV.</p>
+        </div>
+        <a href="https://www.kompas.tv/kalam-hati" target="_blank" rel="noopener" class="see-all">
+          LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
+        </a>
+      </div>
+      <div class="news-grid" id="newsGrid"><!-- diisi script.js --></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ 4. GALERI (Figma 20:1516) ============ -->
+<section class="section section-galeri" id="galeri">
+  <div class="shell">
+    <header class="sec-head reveal">
+      <p class="eyebrow">KENAL LEBIH DEKAT</p>
+      <h2 class="sec-title">Galeri Kalam Hati</h2>
+      <p class="sec-desc">Saksikan terus kegiatan kami selama acara kajian</p>
+    </header>
+
+    <div class="gallery reveal" data-reveal-delay="80">
+      <div class="gal-viewport">
+        <div class="gal-track" id="galTrack"><!-- diisi script.js --></div>
+        <button class="gal-arrow gal-arrow--prev" id="galPrev" aria-label="Foto sebelumnya">
+          <i class="ph-bold ph-caret-left"></i>
+        </button>
+        <button class="gal-arrow gal-arrow--next" id="galNext" aria-label="Foto berikutnya">
+          <i class="ph-bold ph-caret-right"></i>
+        </button>
+      </div>
+      <div class="gal-dots" id="galDots" role="tablist" aria-label="Pilih foto"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ 5. MARI BERINTERAKSI ============ -->
+<section class="section section-interaksi" id="mari-berinteraksi">
+  <div class="interaksi-bg" aria-hidden="true"></div>
+  <div class="shell">
+
+    <header class="sec-head sec-head--onplum reveal">
+      <p class="eyebrow">UNTUKMU, TEMAN HATI</p>
+      <h2 class="sec-title sec-title--gold">Mari Berinteraksi</h2>
+      <p class="sec-desc">Suaramu menentukan tema kajian berikutnya. Sampaikan usulan atau
+        pertanyaanmu — insyaallah kami bacakan di studio.</p>
+    </header>
+
+    <div class="tabs reveal" data-reveal-delay="80">
+      <div class="tab-bar" role="tablist">
+        <button class="tab is-active" role="tab" data-tab="teman" aria-selected="true">
+          <i class="ph-fill ph-users-three"></i> Ruang Teman Hati
+        </button>
+        <button class="tab" role="tab" data-tab="tanya" aria-selected="false">
+          <i class="ph-fill ph-microphone-stage"></i> Tanya Ustaz &amp; Ustazah
+        </button>
+        <span class="tab-glider" id="tabGlider" aria-hidden="true"></span>
+      </div>
+
+      <div class="tab-panels">
+        <div class="tab-panel is-active" data-panel="teman" role="tabpanel">
+          <div class="panel-aside">
+            <h3>Ruang Teman Hati</h3>
+            <p>Ada tema yang mengganjal di hati? Usulkan di sini. Sebutkan juga ustaz atau ustazah yang kamu harap membahasnya.</p>
+            <ul class="pa-points">
+              <li><i class="ph-fill ph-check-circle"></i> Usulan dibaca tim redaksi setiap Senin</li>
+              <li><i class="ph-fill ph-check-circle"></i> Tema terpilih diumumkan di Instagram</li>
+              <li><i class="ph-fill ph-check-circle"></i> Data pribadimu kami jaga kerahasiaannya</li>
+            </ul>
+          </div>
+          <form class="form" data-form="teman" novalidate>
+            <div class="field">
+              <label for="t-nama">Nama Lengkap <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-user"></i>
+                <input type="text" id="t-nama" name="nama" placeholder="Nama lengkap kamu" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field">
+              <label for="t-hp">Nomor Handphone <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-phone"></i>
+                <input type="tel" id="t-hp" name="hp" placeholder="08xxxxxxxxxx" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field field--full">
+              <label for="t-alamat">Alamat <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-map-pin"></i>
+                <input type="text" id="t-alamat" name="alamat" placeholder="Kelurahan, Kecamatan, Kota" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field field--full">
+              <label for="t-tema">Usulan Tema Kajian <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-book-open-text"></i>
+                <input type="text" id="t-tema" name="tema" placeholder="Contoh: Ikhlas saat doa belum dijawab" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field field--full">
+              <label for="t-narsum">Usulan Ustaz / Ustazah</label>
+              <div class="input-wrap"><i class="ph ph-microphone-stage"></i>
+                <input type="text" id="t-narsum" name="narasumber" placeholder="Nama ustaz atau ustazah yang kamu harapkan" />
+              </div>
+            </div>
+            <div class="field field--full">
+              <label for="t-alasan">Ceritakan Alasannya</label>
+              <div class="input-wrap input-wrap--area"><i class="ph ph-quotes"></i>
+                <textarea id="t-alasan" name="alasan" rows="3" maxlength="400" placeholder="Kenapa tema ini penting untukmu?"></textarea>
+              </div>
+              <small class="hint"><span data-counter-for="t-alasan">0</span>/400 karakter</small>
+            </div>
+            <div class="field field--full form-foot">
+              <label class="check"><input type="checkbox" required /><span></span>
+                Saya setuju data ini digunakan untuk keperluan produksi Kalam Hati.
+              </label>
+              <button type="submit" class="btn btn-fig btn-fig-primary magnetic">
+                <i class="ph-bold ph-paper-plane-tilt"></i> <span>Kirim Usulan</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-panel" data-panel="tanya" role="tabpanel">
+          <div class="panel-aside">
+            <h3>Tanya Ustaz &amp; Ustazah</h3>
+            <p>Sampaikan pertanyaanmu kepada narasumber Kalam Hati. Pertanyaan pilihan akan dijawab langsung saat siaran.</p>
+            <ul class="pa-points">
+              <li><i class="ph-fill ph-check-circle"></i> Dijawab langsung di segmen Tanya Jawab</li>
+              <li><i class="ph-fill ph-check-circle"></i> Boleh memakai nama samaran saat disiarkan</li>
+              <li><i class="ph-fill ph-check-circle"></i> Balasan tertulis dikirim via WhatsApp</li>
+            </ul>
+          </div>
+          <form class="form" data-form="tanya" novalidate>
+            <div class="field">
+              <label for="q-nama">Nama Lengkap <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-user"></i>
+                <input type="text" id="q-nama" name="nama" placeholder="Nama lengkap kamu" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field">
+              <label for="q-hp">Nomor Handphone <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-phone"></i>
+                <input type="tel" id="q-hp" name="hp" placeholder="08xxxxxxxxxx" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field field--full">
+              <label for="q-alamat">Alamat <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-map-pin"></i>
+                <input type="text" id="q-alamat" name="alamat" placeholder="Kelurahan, Kecamatan, Kota" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field field--full">
+              <label for="q-tujuan">Pertanyaan Ditujukan Kepada</label>
+              <div class="input-wrap"><i class="ph ph-user-focus"></i>
+                <select id="q-tujuan" name="tujuan" data-narsum-select>
+                  <option value="">Siapa saja narasumber Kalam Hati</option>
+                </select>
+                <i class="ph-bold ph-caret-down sel-caret"></i>
+              </div>
+            </div>
+            <div class="field field--full">
+              <label for="q-topik">Kategori Pertanyaan</label>
+              <div class="input-wrap"><i class="ph ph-tag"></i>
+                <select id="q-topik" name="topik">
+                  <option value="">Pilih kategori</option>
+                  <option>Akidah &amp; Tauhid</option>
+                  <option>Ibadah &amp; Fikih Sehari-hari</option>
+                  <option>Keluarga &amp; Parenting</option>
+                  <option>Muamalah &amp; Rezeki</option>
+                  <option>Akhlak &amp; Kesehatan Hati</option>
+                </select>
+                <i class="ph-bold ph-caret-down sel-caret"></i>
+              </div>
+            </div>
+            <div class="field field--full">
+              <label for="q-tanya">Pertanyaanmu <em>*</em></label>
+              <div class="input-wrap input-wrap--area"><i class="ph ph-question"></i>
+                <textarea id="q-tanya" name="pertanyaan" rows="4" maxlength="500" placeholder="Tuliskan pertanyaanmu selengkap mungkin…" required></textarea>
+              </div>
+              <small class="hint"><span data-counter-for="q-tanya">0</span>/500 karakter</small>
+              <small class="err"></small>
+            </div>
+            <div class="field field--full form-foot">
+              <label class="check"><input type="checkbox" required /><span></span>
+                Saya setuju data ini digunakan untuk keperluan produksi Kalam Hati.
+              </label>
+              <button type="submit" class="btn btn-fig btn-fig-primary magnetic">
+                <i class="ph-bold ph-paper-plane-tilt"></i> <span>Kirim Pertanyaan</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+
+<!-- ============ 6. FOOTER ============ -->
+<footer class="footer">
+  <div class="shell footer-inner">
+    <div class="footer-brand">
+      <img src="asset/LOGO KALAM HATI.png" alt="Kalam Hati" class="footer-logo" />
+      <p class="footer-tagline">InsyaAllah Sampai ke Hati</p>
+      <p class="footer-air"><i class="ph-fill ph-television-simple"></i> Setiap Minggu, pkl. 13:00 WIB di KompasTV</p>
+    </div>
+
+    <nav class="footer-nav" aria-label="Menu footer">
+      <h4>Jelajahi</h4>
+      <ul>
+        <li><a href="#beranda">Beranda</a></li>
+        <li><a href="#jadwal-kajian">Jadwal Kajian</a></li>
+        <li><a href="#pusat-media">Pusat Media</a></li>
+        <li><a href="#galeri">Galeri</a></li>
+        <li><a href="#mari-berinteraksi">Mari Berinteraksi</a></li>
+      </ul>
+    </nav>
+
+    <div class="footer-social">
+      <h4>Ikuti Kalam Hati</h4>
+      <div class="social-row">
+        <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram Kalam Hati" class="soc"><i class="ph-fill ph-instagram-logo"></i></a>
+        <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok Kalam Hati" class="soc"><i class="ph-fill ph-tiktok-logo"></i></a>
+        <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube Kalam Hati" class="soc"><i class="ph-fill ph-youtube-logo"></i></a>
+        <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook Kalam Hati" class="soc"><i class="ph-fill ph-facebook-logo"></i></a>
+        <a href="https://x.com/" target="_blank" rel="noopener" aria-label="X Kalam Hati" class="soc"><i class="ph-fill ph-x-logo"></i></a>
+        <a href="https://wa.me/" target="_blank" rel="noopener" aria-label="WhatsApp Kalam Hati" class="soc"><i class="ph-fill ph-whatsapp-logo"></i></a>
+      </div>
+      <p class="social-handle">@kalamhati.tv</p>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="shell footer-bottom-inner">
+      <p>© <span id="year">2026</span> Kalam Hati — KompasTV. Seluruh hak cipta dilindungi.</p>
+      <p class="fb-quran">“Ingatlah, hanya dengan mengingat Allah hati menjadi tenteram.” — QS. Ar-Ra’d: 28</p>
+    </div>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="Kembali ke atas"><i class="ph-bold ph-arrow-up"></i></button>
+
+<!-- ============ MODAL KONTEN HARIAN (gaya pop-up Instagram) ============ -->
+<div class="modal modal--daily" id="modalDaily" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-backdrop" data-close-modal></div>
+  <button class="daily-modal-close" data-close-modal aria-label="Tutup"><i class="ph-bold ph-x"></i></button>
+
+  <div class="daily-modal-card">
+    <div class="daily-modal-media" id="dailyModalMedia"></div>
+
+    <div class="daily-modal-side">
+      <div class="daily-modal-head">
+        <img class="daily-modal-avatar" src="asset/ig-avatar.jpg" alt="Kalam Hati" />
+        <div class="daily-modal-who">
+          <span class="daily-modal-user">dikalamhati</span>
+          <span class="daily-modal-plat" id="dailyModalPlat"></span>
+        </div>
+      </div>
+      <div class="daily-modal-body">
+        <p class="daily-modal-caption" id="dailyModalCaption">—</p>
+      </div>
+      <div class="daily-modal-foot">
+        <span class="daily-modal-date" id="dailyModalDate">—</span>
+        <a class="btn btn-fig btn-fig-primary daily-modal-link" id="dailyModalLink" href="#" target="_blank" rel="noopener">
+          <span>Lihat di Instagram</span><i class="ph-bold ph-arrow-up-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL PILIH PLATFORM (CTA Lihat Semua Konten Harian) ============ -->
+<div class="modal modal--platform" id="modalPlatform" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="platformTitle">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-card platform-card">
+    <button class="modal-close" data-close-modal aria-label="Tutup"><i class="ph-bold ph-x"></i></button>
+    <span class="modal-eyebrow"><i class="ph-fill ph-compass"></i> Konten Harian</span>
+    <h3 id="platformTitle">Mau Lihat di Mana?</h3>
+    <p class="platform-desc">Pilih media sosial resmi Kalam Hati untuk menjelajahi semua postingan.</p>
+
+    <div class="platform-choices">
+      <a class="platform-choice platform-choice--ig" href="https://www.instagram.com/dikalamhati/" target="_blank" rel="noopener">
+        <i class="ph-fill ph-instagram-logo"></i>
+        <span class="platform-choice-body">
+          <strong>Instagram</strong>
+          <em>@dikalamhati</em>
+        </span>
+        <i class="ph-bold ph-arrow-up-right"></i>
+      </a>
+      <a class="platform-choice platform-choice--tt" href="https://www.tiktok.com/@dikalamhati" target="_blank" rel="noopener">
+        <i class="ph-fill ph-tiktok-logo"></i>
+        <span class="platform-choice-body">
+          <strong>TikTok</strong>
+          <em>@dikalamhati</em>
+        </span>
+        <i class="ph-bold ph-arrow-up-right"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL PENDAFTARAN ============ -->
+<div class="modal" id="modalDaftar" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-card">
+    <button class="modal-close" data-close-modal aria-label="Tutup"><i class="ph-bold ph-x"></i></button>
+    <span class="modal-eyebrow"><i class="ph-fill ph-seal-check"></i> Pendaftaran Kajian</span>
+    <h3 id="modalTitle">Kajian Kalam Hati</h3>
+    <div class="modal-sub kj-meta" id="modalSub">—</div>
+
+    <form class="form form--modal" data-form="daftar" novalidate>
+      <div class="field">
+        <label for="d-nama">Nama Lengkap <em>*</em></label>
+        <div class="input-wrap"><i class="ph ph-user"></i>
+          <input type="text" id="d-nama" name="nama" placeholder="Nama lengkap kamu" required />
+        </div><small class="err"></small>
+      </div>
+      <div class="field">
+        <label for="d-hp">Nomor Handphone <em>*</em></label>
+        <div class="input-wrap"><i class="ph ph-phone"></i>
+          <input type="tel" id="d-hp" name="hp" placeholder="08xxxxxxxxxx" required />
+        </div><small class="err"></small>
+      </div>
+      <div class="field field--full">
+        <label for="d-alamat">Alamat <em>*</em></label>
+        <div class="input-wrap"><i class="ph ph-map-pin"></i>
+          <input type="text" id="d-alamat" name="alamat" placeholder="Kelurahan, Kecamatan, Kota" required />
+        </div><small class="err"></small>
+      </div>
+      <div class="field field--full">
+        <label for="d-jumlah">Jumlah Jemaah</label>
+        <div class="input-wrap"><i class="ph ph-users-three"></i>
+          <select id="d-jumlah" name="jumlah">
+            <option>1 Orang</option><option>2 - 10 Orang</option><option>10 - 30 Orang</option>
+            <option>30 - 50 Orang</option><option>50 Orang Lebih</option>
+          </select>
+          <i class="ph-bold ph-caret-down sel-caret"></i>
+        </div>
+      </div>
+      <div class="field field--full form-foot">
+        <label class="check"><input type="checkbox" required /><span></span>
+          Saya bersedia hadir dan mengikuti tata tertib kajian.
+        </label>
+        <button type="submit" class="btn btn-fig btn-fig-primary magnetic">
+          <i class="ph-bold ph-check-circle"></i> <span>Daftar Sekarang</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <i class="ph-fill ph-check-circle"></i><span id="toastMsg"></span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
