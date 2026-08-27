@@ -41,7 +41,9 @@
 
   --r-sm:10px; --r-md:12px; --r-lg:16px; --r-xl:24px; --r-pill:1000px;
 
-  --nav-h:93px; /* konten navbar ~61px + padding vertikal ~16px atas-bawah */
+  --nav-h:64px; /* tinggi container navbar */
+  --hijri-h:30px; /* strip hari/tanggal Hijriah + jam di atas navbar */
+  --topbar-h:calc(var(--hijri-h) + var(--nav-h)); /* total tinggi strip + navbar, dipakai utk jarak konten */
   --shell:1240px;
 
   --spring:cubic-bezier(.22,1.4,.36,1);
@@ -56,7 +58,7 @@
 
 /* ----------------------------- 2. Reset ----------------------------------- */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-family:var(--font);scroll-behavior:smooth;scroll-padding-top:calc(var(--nav-h) + 18px);-webkit-text-size-adjust:100%}
+html{font-family:var(--font);scroll-behavior:smooth;scroll-padding-top:calc(var(--topbar-h) + 18px);-webkit-text-size-adjust:100%}
 body{
   font-family:var(--font);
   color:var(--ink);
@@ -104,8 +106,8 @@ ul{list-style:none}
 .btn-fig{padding:20px;font-size:1rem;line-height:1.25}
 .btn-block{flex:1 1 0;min-width:0;padding:12px 16px}
 
-.btn-fig-primary{background:var(--grad-fig);color:var(--gold);box-shadow:0 16px 34px -16px rgba(98,32,70,.65)}
-.btn-fig-primary:hover{transform:translateY(-3px);box-shadow:0 24px 46px -18px rgba(98,32,70,.7)}
+.btn-fig-primary{background:var(--grad-fig);color:var(--gold);font-weight:800}
+.btn-fig-primary:hover{transform:translateY(-3px)}
 .btn-shine{position:absolute;inset:0;z-index:-1;
   background:linear-gradient(110deg,transparent 30%,rgba(255,243,210,.42) 50%,transparent 70%);
   transform:translateX(-120%)}
@@ -115,23 +117,30 @@ ul{list-style:none}
 .btn-fig-outline{border:1px solid var(--line-dim);color:#000;background:rgba(255,255,255,.4)}
 .btn-fig-outline:hover{transform:translateY(-3px);background:#fff;border-color:var(--plum);color:var(--plum)}
 
-/* --------------------------- 5. Navbar ------------------------------------ */
+/* --------------------------- 5. Strip tanggal Hijriah ---------------------- */
+/* Strip tipis di atas navbar — selalu tampil, latar ungu solid. */
+.hijri-bar{
+  position:fixed;top:0;left:0;right:0;height:var(--hijri-h);z-index:101;
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  background:var(--plum);color:#fff;font-size:.8rem;font-weight:600;letter-spacing:.01em;
+}
+.hijri-bar i{color:var(--gold);font-size:.95rem}
+.hijri-dot{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.4);flex:0 0 auto}
+.hijri-zone{opacity:.72;font-weight:500}
+
+/* --------------------------- 5b. Navbar ------------------------------------ */
 .navbar{
-  position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:100;
+  position:fixed;top:var(--hijri-h);left:0;right:0;height:var(--nav-h);z-index:100;
   display:flex;align-items:center;
-  transition:background .45s var(--smooth),box-shadow .45s var(--smooth),height .35s var(--smooth);
+  background:#fff;box-shadow:0 1px 0 rgba(98,32,70,.08);
+  transition:box-shadow .45s var(--smooth),height .35s var(--smooth);
 }
 .navbar.is-stuck{
-  height:81px;background:rgba(255,255,255,.86);backdrop-filter:blur(18px) saturate(150%);
   box-shadow:0 1px 0 rgba(98,32,70,.08),0 12px 30px -22px rgba(59,10,40,.5);
 }
 .nav-inner{width:100%;display:flex;justify-content:center;padding-inline:20px}
 .nav-menu{
-  position:relative;display:flex;align-items:center;gap:.25rem;
-  background:rgba(255,255,255,.9);border:1px solid rgba(98,32,70,.1);
-  backdrop-filter:blur(16px) saturate(160%);
-  padding:.34rem;border-radius:var(--r-pill);
-  box-shadow:0 10px 30px -18px rgba(59,10,40,.5);max-width:100%;
+  position:relative;display:flex;align-items:center;gap:.25rem;max-width:100%;
 }
 .nav-link{
   position:relative;z-index:2;display:block;padding:.58rem 1.15rem;border-radius:var(--r-pill);
@@ -214,7 +223,7 @@ ul{list-style:none}
 .hero-inner{
   position:relative;z-index:3;width:min(100% - 40px,var(--shell));margin-inline:auto;
   display:grid;grid-template-columns:minmax(0,530px) 1fr;align-items:center;
-  padding-block:calc(var(--nav-h) + 34px);
+  padding-block:calc(var(--topbar-h) + 34px);
 }
 .hero-copy{display:flex;flex-direction:column;align-items:flex-start;gap:24px;max-width:530px}
 
@@ -235,24 +244,41 @@ ul{list-style:none}
    hanya zona WIB (Jakarta). Disembunyikan di layar sempit karena tidak
    cukup tempat di samping menu; lihat media query di bawah. */
 .prayer-strip{
-  display:none;align-items:center;gap:12px;flex:0 0 auto;
-  padding:9px 18px;border-radius:var(--r-pill);
-  background:rgba(255,255,255,.9);border:1px solid rgba(98,32,70,.12);
-  backdrop-filter:blur(16px) saturate(160%);
-  box-shadow:0 10px 30px -18px rgba(59,10,40,.5);
+  position:relative;display:none;align-items:center;gap:10px;flex:0 0 auto;cursor:pointer;
 }
-.ps-icon{flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
-  background:var(--grad-fig);color:var(--gold);font-size:1.25rem}
+/* Ikon masjid polos tanpa kotak — warnanya sendiri yang gradien ungu,
+   lewat trik background-clip:text pada glyph-nya (::before). */
+.ps-icon{flex:0 0 auto;font-size:1.5rem;line-height:1;display:inline-flex}
+.ps-icon i::before{
+  background:var(--grad-fig);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
 .ps-body{min-width:0}
-.ps-now{font-size:.98rem;font-weight:600;color:var(--ink);letter-spacing:-.01em;line-height:1.25;white-space:nowrap}
-.ps-now b{font-weight:800;color:var(--plum)}
 .ps-next{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;
-  font-size:.82rem;color:var(--ink-3);margin-top:5px;line-height:1.25;white-space:nowrap}
-.ps-next b{font-weight:700;color:var(--ink-2)}
+  font-size:.88rem;color:var(--ink);line-height:1.25;white-space:nowrap}
+.ps-next b{font-weight:700;color:var(--ink)}
 .ps-dot{width:3px;height:3px;border-radius:50%;background:var(--line-dim);flex:0 0 auto}
 .ps-zone{flex:0 0 auto;text-align:center;font-size:.72rem;font-weight:800;letter-spacing:.06em;
-  color:var(--plum);line-height:1.1;padding-left:10px;border-left:1px solid rgba(98,32,70,.15)}
-.ps-zone small{display:block;font-size:.62rem;font-weight:600;color:var(--ink-3);letter-spacing:.02em}
+  color:var(--ink);line-height:1.1;padding-left:10px;border-left:1px solid rgba(98,32,70,.15)}
+.ps-zone small{display:block;font-size:.62rem;font-weight:600;color:var(--ink);letter-spacing:.02em}
+
+/* Container kecil jadwal sholat lengkap — muncul saat prayer-strip diklik */
+.prayer-pop{
+  position:absolute;top:calc(100% + 14px);right:0;z-index:110;
+  width:220px;background:#fff;border-radius:var(--r-md);
+  box-shadow:0 30px 60px -20px rgba(59,10,40,.35);border:1px solid var(--line);
+  padding:.7rem;cursor:default;
+  opacity:0;visibility:hidden;transform:translateY(-8px);
+  transition:opacity .25s var(--smooth),transform .3s var(--spring),visibility .25s;
+}
+.prayer-strip.is-open .prayer-pop{opacity:1;visibility:visible;transform:none}
+.prayer-pop-title{font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--ink-3);padding:.2rem .4rem .55rem;border-bottom:1px dashed var(--line);margin-bottom:.35rem}
+.prayer-pop-list{display:flex;flex-direction:column;gap:2px}
+.prayer-pop-row{display:flex;align-items:center;justify-content:space-between;
+  padding:.4rem .4rem;border-radius:var(--r-sm);font-size:.85rem;color:var(--ink)}
+.prayer-pop-row span:first-child{font-weight:600}
+.prayer-pop-row.is-now{background:var(--pink-soft)}
+.prayer-pop-row.is-now span{font-weight:800;color:var(--plum)}
 
 @media (min-width:1180px){
   .nav-inner{justify-content:space-between;max-width:var(--shell);margin-inline:auto}
@@ -364,7 +390,7 @@ ul{list-style:none}
 /* Panel peta */
 .kajian-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
   overflow:hidden;display:flex;flex-direction:column;gap:16px;padding-bottom:16px;
-  position:sticky;top:calc(var(--nav-h) + 20px)}
+  position:sticky;top:calc(var(--topbar-h) + 20px)}
 .panel-map{height:400px;background:#f1f1f1;overflow:hidden}
 .panel-map iframe{width:100%;height:100%;border:0;display:block}
 .panel-body{padding-inline:24px;display:flex;flex-direction:column;gap:15px}
@@ -501,15 +527,30 @@ ul{list-style:none}
 
 /* --------------------------- 11. Galeri ----------------------------------- */
 .section-galeri{background:var(--white);padding:clamp(44px,4.45vw,64px) 0 clamp(40px,3.5vw,50px)}
-.gallery{position:relative}
-.gal-viewport{position:relative;border-radius:var(--r-xl);overflow:hidden;background:#ddd;
-  aspect-ratio:1240/510;box-shadow:var(--shadow-lg)}
-.gal-track{display:flex;height:100%;transition:transform .8s var(--spring)}
-.gal-slide{flex:0 0 100%;height:100%;position:relative}
+/* Carousel bergaya coverflow (Figma node 20:1516): slide tengah penuh,
+   tetangganya 0.9×, terluar 0.72×, dan slide terluar sengaja TERPOTONG oleh
+   tepi layar — viewport-nya full-bleed 100vw, tanpa margin kiri-kanan.
+   Skala, peredupan, dan posisi tiap slide dihitung script.js karena
+   bergantung pada jaraknya dari slide tengah (berubah saat digeser).
+   --gal-w = lebar slide TENGAH; Figma: 438.667 / 1440 = 30.5vw. */
+.gallery{position:relative;--gal-w:30.5%}
+.gal-viewport{
+  position:relative;overflow:hidden;padding-block:30px;
+  width:100vw;margin-left:calc(50% - 50vw);   /* keluar dari .shell → full-bleed */
+}
+.gal-track{display:flex;width:100%;align-items:center;transition:transform .8s var(--spring)}
+.gal-slide{
+  flex:0 0 var(--gal-w);aspect-ratio:4/3;position:relative;
+  border-radius:var(--r-lg);overflow:hidden;cursor:pointer;
+  box-shadow:var(--shadow-md);
+  transition:transform .8s var(--spring),filter .6s var(--smooth),box-shadow .6s var(--smooth);
+}
+.gal-slide.is-center{cursor:default;box-shadow:var(--shadow-lg)}
+/* Semua slide terisi penuh & seragam seperti desain Figma. Foto sumbernya
+   panoramik (2.43:1) sedangkan kotaknya 4:3, jadi sisi kiri-kanan foto
+   memang dipangkas — ini pilihan yang disepakati agar tidak ada ruang
+   kosong di dalam kotak. */
 .gal-slide svg,.gal-slide img{width:100%;height:100%;display:block;object-fit:cover}
-.gal-cap{position:absolute;left:0;right:0;bottom:0;padding:56px 32px 24px;color:#fff;
-  font-size:1rem;font-weight:600;letter-spacing:-.02em;
-  background:linear-gradient(180deg,transparent,rgba(75,20,53,.85))}
 .gal-arrow{
   position:absolute;top:50%;transform:translateY(-50%);z-index:3;
   width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:1.25rem;
@@ -568,28 +609,19 @@ ul{list-style:none}
 }
 
 .tab-panels{margin-top:1.8rem;position:relative}
-.tab-panel{display:none;grid-template-columns:.72fr 1.28fr;
+.tab-panel{display:none;
   background:#fff;border-radius:var(--r-xl);overflow:hidden;
   box-shadow:0 44px 90px -40px rgba(0,0,0,.6);border:1px solid rgba(241,212,120,.3)}
-.tab-panel.is-active{display:grid;animation:panelIn .6s var(--spring) both}
+.tab-panel.is-active{display:block;animation:panelIn .6s var(--spring) both}
 @keyframes panelIn{from{opacity:0;transform:translateY(22px) scale(.985)}to{opacity:1;transform:none}}
-@media (max-width:880px){.tab-panel.is-active{grid-template-columns:1fr}}
 
-.panel-aside{background:var(--grad-fig);color:#fff;padding:2rem 1.7rem;position:relative;overflow:hidden}
-/* Ornamen bintang delapan pada panel kiri */
-.panel-aside::before{
-  content:'';position:absolute;inset:0;opacity:.14;pointer-events:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70' viewBox='0 0 70 70'%3E%3Cg fill='none' stroke='%23F1D478' stroke-width='1'%3E%3Ccircle cx='35' cy='35' r='24'/%3E%3Cpath d='M35 11 53 35 35 59 17 35Z'/%3E%3C/g%3E%3C/svg%3E");
-  background-size:70px 70px;
-}
-.panel-aside>*{position:relative;z-index:1}
-.panel-aside h3{font-size:1.5rem;font-weight:800;color:var(--gold);margin:0 0 .6rem;letter-spacing:-.02em}
-.panel-aside>p{font-size:.92rem;color:rgba(255,255,255,.8);line-height:1.7}
-.pa-points{margin-top:1.4rem;display:flex;flex-direction:column;gap:.7rem}
-.pa-points li{display:flex;gap:.55rem;font-size:.85rem;color:rgba(255,255,255,.86);line-height:1.5}
-.pa-points i{color:var(--gold);font-size:1.1rem;flex:0 0 auto;margin-top:.05rem}
+/* Judul & keterangan panel — kini di atas form (bukan lagi kolom kiri) */
+.panel-intro{padding:2rem clamp(1.2rem,2.6vw,2rem) 0;text-align:center}
+.panel-intro h3{font-size:1.4rem;font-weight:800;color:var(--plum);margin:0 0 .5rem;letter-spacing:-.02em}
+.panel-intro p{font-size:.92rem;color:var(--ink-3);line-height:1.7;max-width:52ch;margin-inline:auto}
 
 .form{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.1rem;padding:2rem clamp(1.2rem,2.6vw,2rem);align-content:start}
+.panel-intro+.form{padding-top:1.5rem}
 @media (max-width:560px){.form{grid-template-columns:1fr}}
 .field--full{grid-column:1/-1}
 .field label{display:block;font-size:.82rem;font-weight:700;color:var(--plum);margin-bottom:.42rem}
@@ -609,11 +641,10 @@ ul{list-style:none}
 .sel-caret{position:absolute;right:1rem;color:var(--plum);pointer-events:none;font-size:.9rem}
 .input-wrap input::placeholder,.input-wrap textarea::placeholder{color:#B0A6AC}
 .input-wrap input:focus,.input-wrap select:focus,.input-wrap textarea:focus{
-  border-color:var(--plum);background:#fff;box-shadow:0 0 0 4px rgba(98,32,70,.1)}
+  border-color:var(--plum);background:#fff}
 .input-wrap:focus-within>i:first-child{opacity:1;transform:scale(1.08)}
 .field.has-error .input-wrap input,.field.has-error .input-wrap textarea{
-  border-color:#D0342C;box-shadow:0 0 0 4px rgba(208,52,44,.1);animation:shake .4s}
-@keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+  border-color:#D0342C}
 .err{display:block;font-size:.75rem;color:#D0342C;font-weight:600;margin-top:.3rem;
   opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s}
 .field.has-error .err{opacity:1;transform:none}
@@ -832,7 +863,7 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:.8rem;color:var(
 
 @media (max-width:1000px){
   .hero-stage{min-height:0;display:block}
-  .hero-inner{grid-template-columns:1fr;text-align:center;padding-block:calc(var(--nav-h) + 30px) 0}
+  .hero-inner{grid-template-columns:1fr;text-align:center;padding-block:calc(var(--topbar-h) + 30px) 0}
   .hero-copy{align-items:center;margin-inline:auto}
   .hero-cta{justify-content:center}
   .hero-asset{position:relative;right:auto;bottom:auto;width:min(100%,560px);margin:8px auto -4px}
@@ -852,7 +883,7 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:.8rem;color:var(
 
   .kajian-grid{grid-template-columns:1fr}
   .kajian-panel{position:static}
-  .gal-viewport{aspect-ratio:16/10}
+  .gallery{--gal-w:40%}
   .episode-grid{grid-template-columns:1fr}
   .daily-grid,.news-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .ep-main-art{height:min(52vw,349px)}
@@ -866,15 +897,15 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:.8rem;color:var(
   .kj-card{flex-direction:column;align-items:stretch}
   .kj-date{flex-direction:row;align-items:baseline;justify-content:center;gap:10px;padding:8px 12px}
   .panel-actions{flex-direction:column}
-  .gal-viewport{aspect-ratio:3/2}
-  .gal-cap{padding:40px 18px 16px;font-size:.875rem}
+  .gallery{--gal-w:52%}
   .gal-arrow{width:40px;height:40px;font-size:1rem}
   .gal-dots{padding:8px;gap:5px}
   .gal-dot{width:11px;height:11px}
 }
 
 @media (max-width:640px){
-  :root{--nav-h:81px} /* konten navbar ~49px + padding vertikal ~16px atas-bawah */
+  .hijri-bar{font-size:.66rem;gap:.35rem;padding-inline:12px}
+  .hijri-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .hero-cta{width:100%}
   .hero-cta .btn-fig{flex:1 1 100%;padding:18px 20px}
   .daily-badge{top:14px;left:14px;right:auto}
@@ -883,7 +914,7 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:.8rem;color:var(
 }
 
 @media (max-width:520px){
-  .gal-viewport{aspect-ratio:4/3}
+  .gallery{--gal-w:66%}
 }
 
 @media (max-width:460px){

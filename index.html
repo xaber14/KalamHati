@@ -23,6 +23,15 @@
 
 <div class="scroll-progress"><span id="scrollBar"></span></div>
 
+<!-- ============ STRIP TANGGAL HIJRIAH ============ -->
+<div class="hijri-bar" id="hijriBar" aria-hidden="true">
+  <i class="ph-fill ph-moon-stars"></i>
+  <span id="hijriDate">—</span>
+  <span class="hijri-dot"></span>
+  <i class="ph-fill ph-clock"></i>
+  <span id="hijriClock">—</span> <span class="hijri-zone">WIB</span>
+</div>
+
 <!-- ============ 0. NAVBAR (tidak diubah) ============ -->
 <header class="navbar" id="navbar">
   <nav class="nav-inner" aria-label="Menu utama">
@@ -34,11 +43,12 @@
       <span class="nav-pill" id="navPill" aria-hidden="true"></span>
     </ul>
 
-    <!-- Waktu sholat berjalan & berikutnya (zona WIB / Jakarta) -->
-    <aside class="prayer-strip" aria-label="Waktu sholat Jakarta">
+    <!-- Waktu sholat berjalan & berikutnya (zona WIB / Jakarta). Bisa diklik
+         untuk membuka jadwal sholat lengkap hari ini. -->
+    <aside class="prayer-strip" id="prayerStrip" aria-label="Waktu sholat Jakarta"
+           role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
       <span class="ps-icon"><i class="ph-fill ph-mosque"></i></span>
       <div class="ps-body">
-        <p class="ps-now">Sekarang waktu <b id="psCurrent">—</b></p>
         <p class="ps-next">
           Berikutnya <b id="psNext">—</b>
           <span class="ps-dot"></span><span id="psNextTime">—</span>
@@ -46,6 +56,11 @@
         </p>
       </div>
       <span class="ps-zone">WIB<small>Jakarta</small></span>
+
+      <div class="prayer-pop" id="prayerPop" aria-hidden="true">
+        <p class="prayer-pop-title">Jadwal Sholat Hari Ini</p>
+        <ul class="prayer-pop-list" id="prayerPopList"><!-- diisi script.js --></ul>
+      </div>
     </aside>
   </nav>
 </header>
@@ -277,25 +292,63 @@
 
     <div class="tabs reveal" data-reveal-delay="80">
       <div class="tab-bar" role="tablist">
-        <button class="tab is-active" role="tab" data-tab="teman" aria-selected="true">
-          <i class="ph-fill ph-users-three"></i> Ruang Teman Hati
+        <button class="tab is-active" role="tab" data-tab="curahan" aria-selected="true">
+          <i class="ph-fill ph-chat-teardrop-text"></i> Curahan Hati
         </button>
-        <button class="tab" role="tab" data-tab="tanya" aria-selected="false">
-          <i class="ph-fill ph-microphone-stage"></i> Tanya Ustaz &amp; Ustazah
+        <button class="tab" role="tab" data-tab="teman" aria-selected="false">
+          <i class="ph-fill ph-users-three"></i> Ruang Teman Hati
         </button>
         <span class="tab-glider" id="tabGlider" aria-hidden="true"></span>
       </div>
 
       <div class="tab-panels">
-        <div class="tab-panel is-active" data-panel="teman" role="tabpanel">
-          <div class="panel-aside">
+        <div class="tab-panel is-active" data-panel="curahan" role="tabpanel">
+          <div class="panel-intro">
+            <h3>Curahan Hati</h3>
+            <p>Sampaikan pertanyaan atau curahan hatimu — insyaallah kami baca dan tanggapi dengan hangat.</p>
+          </div>
+          <form class="form" data-form="curahan" novalidate>
+            <div class="field">
+              <label for="c-nama">Nama Lengkap <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-user"></i>
+                <input type="text" id="c-nama" name="nama" placeholder="Nama lengkap kamu" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field">
+              <label for="c-hp">Nomor Handphone <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-phone"></i>
+                <input type="tel" id="c-hp" name="hp" placeholder="08xxxxxxxxxx" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field field--full">
+              <label for="c-alamat">Alamat Lengkap <em>*</em></label>
+              <div class="input-wrap"><i class="ph ph-map-pin"></i>
+                <input type="text" id="c-alamat" name="alamat" placeholder="Kelurahan, Kecamatan, Kota" required />
+              </div><small class="err"></small>
+            </div>
+            <div class="field field--full">
+              <label for="c-tanya">Pertanyaan <em>*</em></label>
+              <div class="input-wrap input-wrap--area"><i class="ph ph-question"></i>
+                <textarea id="c-tanya" name="pertanyaan" rows="4" maxlength="500" placeholder="Tuliskan pertanyaanmu selengkap mungkin…" required></textarea>
+              </div>
+              <small class="hint"><span data-counter-for="c-tanya">0</span>/500 karakter</small>
+              <small class="err"></small>
+            </div>
+            <div class="field field--full form-foot">
+              <label class="check"><input type="checkbox" required /><span></span>
+                Saya setuju data ini digunakan untuk keperluan produksi Kalam Hati.
+              </label>
+              <button type="submit" class="btn btn-fig btn-fig-primary magnetic">
+                <i class="ph-bold ph-paper-plane-tilt"></i> <span>Kirim</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-panel" data-panel="teman" role="tabpanel">
+          <div class="panel-intro">
             <h3>Ruang Teman Hati</h3>
-            <p>Ada tema yang mengganjal di hati? Usulkan di sini. Sebutkan juga ustaz atau ustazah yang kamu harap membahasnya.</p>
-            <ul class="pa-points">
-              <li><i class="ph-fill ph-check-circle"></i> Usulan dibaca tim redaksi setiap Senin</li>
-              <li><i class="ph-fill ph-check-circle"></i> Tema terpilih diumumkan di Instagram</li>
-              <li><i class="ph-fill ph-check-circle"></i> Data pribadimu kami jaga kerahasiaannya</li>
-            </ul>
+            <p>Sampaikan usulan Teman Hati dan kesempatan mendapatkan merchandise Kalam Hati.</p>
           </div>
           <form class="form" data-form="teman" novalidate>
             <div class="field">
@@ -311,7 +364,7 @@
               </div><small class="err"></small>
             </div>
             <div class="field field--full">
-              <label for="t-alamat">Alamat <em>*</em></label>
+              <label for="t-alamat">Alamat Lengkap <em>*</em></label>
               <div class="input-wrap"><i class="ph ph-map-pin"></i>
                 <input type="text" id="t-alamat" name="alamat" placeholder="Kelurahan, Kecamatan, Kota" required />
               </div><small class="err"></small>
@@ -323,95 +376,20 @@
               </div><small class="err"></small>
             </div>
             <div class="field field--full">
-              <label for="t-narsum">Usulan Ustaz / Ustazah</label>
+              <label for="t-ustaz">Pilihan Ustaz / Ustazah</label>
               <div class="input-wrap"><i class="ph ph-microphone-stage"></i>
-                <input type="text" id="t-narsum" name="narasumber" placeholder="Nama ustaz atau ustazah yang kamu harapkan" />
-              </div>
-            </div>
-            <div class="field field--full">
-              <label for="t-alasan">Ceritakan Alasannya</label>
-              <div class="input-wrap input-wrap--area"><i class="ph ph-quotes"></i>
-                <textarea id="t-alasan" name="alasan" rows="3" maxlength="400" placeholder="Kenapa tema ini penting untukmu?"></textarea>
-              </div>
-              <small class="hint"><span data-counter-for="t-alasan">0</span>/400 karakter</small>
-            </div>
-            <div class="field field--full form-foot">
-              <label class="check"><input type="checkbox" required /><span></span>
-                Saya setuju data ini digunakan untuk keperluan produksi Kalam Hati.
-              </label>
-              <button type="submit" class="btn btn-fig btn-fig-primary magnetic">
-                <i class="ph-bold ph-paper-plane-tilt"></i> <span>Kirim Usulan</span>
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <div class="tab-panel" data-panel="tanya" role="tabpanel">
-          <div class="panel-aside">
-            <h3>Tanya Ustaz &amp; Ustazah</h3>
-            <p>Sampaikan pertanyaanmu kepada narasumber Kalam Hati. Pertanyaan pilihan akan dijawab langsung saat siaran.</p>
-            <ul class="pa-points">
-              <li><i class="ph-fill ph-check-circle"></i> Dijawab langsung di segmen Tanya Jawab</li>
-              <li><i class="ph-fill ph-check-circle"></i> Boleh memakai nama samaran saat disiarkan</li>
-              <li><i class="ph-fill ph-check-circle"></i> Balasan tertulis dikirim via WhatsApp</li>
-            </ul>
-          </div>
-          <form class="form" data-form="tanya" novalidate>
-            <div class="field">
-              <label for="q-nama">Nama Lengkap <em>*</em></label>
-              <div class="input-wrap"><i class="ph ph-user"></i>
-                <input type="text" id="q-nama" name="nama" placeholder="Nama lengkap kamu" required />
-              </div><small class="err"></small>
-            </div>
-            <div class="field">
-              <label for="q-hp">Nomor Handphone <em>*</em></label>
-              <div class="input-wrap"><i class="ph ph-phone"></i>
-                <input type="tel" id="q-hp" name="hp" placeholder="08xxxxxxxxxx" required />
-              </div><small class="err"></small>
-            </div>
-            <div class="field field--full">
-              <label for="q-alamat">Alamat <em>*</em></label>
-              <div class="input-wrap"><i class="ph ph-map-pin"></i>
-                <input type="text" id="q-alamat" name="alamat" placeholder="Kelurahan, Kecamatan, Kota" required />
-              </div><small class="err"></small>
-            </div>
-            <div class="field field--full">
-              <label for="q-tujuan">Pertanyaan Ditujukan Kepada</label>
-              <div class="input-wrap"><i class="ph ph-user-focus"></i>
-                <select id="q-tujuan" name="tujuan" data-narsum-select>
+                <select id="t-ustaz" name="narasumber" data-narsum-select>
                   <option value="">Siapa saja narasumber Kalam Hati</option>
                 </select>
                 <i class="ph-bold ph-caret-down sel-caret"></i>
               </div>
             </div>
-            <div class="field field--full">
-              <label for="q-topik">Kategori Pertanyaan</label>
-              <div class="input-wrap"><i class="ph ph-tag"></i>
-                <select id="q-topik" name="topik">
-                  <option value="">Pilih kategori</option>
-                  <option>Akidah &amp; Tauhid</option>
-                  <option>Ibadah &amp; Fikih Sehari-hari</option>
-                  <option>Keluarga &amp; Parenting</option>
-                  <option>Muamalah &amp; Rezeki</option>
-                  <option>Akhlak &amp; Kesehatan Hati</option>
-                </select>
-                <i class="ph-bold ph-caret-down sel-caret"></i>
-              </div>
-            </div>
-            <div class="field field--full">
-              <label for="q-tanya">Pertanyaanmu <em>*</em></label>
-              <div class="input-wrap input-wrap--area"><i class="ph ph-question"></i>
-                <textarea id="q-tanya" name="pertanyaan" rows="4" maxlength="500" placeholder="Tuliskan pertanyaanmu selengkap mungkin…" required></textarea>
-              </div>
-              <small class="hint"><span data-counter-for="q-tanya">0</span>/500 karakter</small>
-              <small class="err"></small>
-            </div>
             <div class="field field--full form-foot">
               <label class="check"><input type="checkbox" required /><span></span>
                 Saya setuju data ini digunakan untuk keperluan produksi Kalam Hati.
               </label>
               <button type="submit" class="btn btn-fig btn-fig-primary magnetic">
-                <i class="ph-bold ph-paper-plane-tilt"></i> <span>Kirim Pertanyaan</span>
+                <i class="ph-bold ph-paper-plane-tilt"></i> <span>Kirim</span>
               </button>
             </div>
           </form>

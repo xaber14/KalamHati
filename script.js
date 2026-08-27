@@ -435,37 +435,144 @@
   /* Avatar pada markup statis (episode utama) */
   $$('[data-av]').forEach(el => { el.innerHTML = avatarSVG(+el.dataset.av); });
 
-  /* --- Galeri --- */
+  /* --- Galeri (carousel coverflow) ---
+     Foto digandakan 3 salinan supaya slide tetangga kiri-kanan selalu ada,
+     sehingga tidak pernah muncul ruang kosong di ujung. Posisi kerja dijaga
+     di salinan tengah: setiap kali transisi selesai dan posisi keluar dari
+     rentang salinan tengah, posisi dinormalkan tanpa animasi (efek "loop"
+     tak berujung yang mulus). */
   const galTrack = $('#galTrack'), galDots = $('#galDots');
-  GALLERY.forEach((src, i) => {
-    const slide = document.createElement('div');
-    slide.className = 'gal-slide';
-    slide.innerHTML = `<img src="${src}" alt="Galeri Kalam Hati ${i + 1}" loading="lazy">`;
-    galTrack.appendChild(slide);
+  const GAL_LEN = GALLERY.length;
+  const GAL_COPIES = 3;
 
+  for (let c = 0; c < GAL_COPIES; c++) {
+    GALLERY.forEach((src, i) => {
+      const slide = document.createElement('div');
+      slide.className = 'gal-slide';
+      /* hanya salinan tengah yang diumumkan ke pembaca layar */
+      if (c !== 1) slide.setAttribute('aria-hidden', 'true');
+      slide.innerHTML = `<img src="${src}" alt="Galeri Kalam Hati ${i + 1}" loading="lazy">`;
+      galTrack.appendChild(slide);
+    });
+  }
+  GALLERY.forEach((_, i) => {
     const dot = document.createElement('button');
     dot.type = 'button';
     dot.className = 'gal-dot' + (i === 0 ? ' is-active' : '');
     dot.setAttribute('role', 'tab');
     dot.setAttribute('aria-label', 'Foto ' + (i + 1));
-    dot.addEventListener('click', () => goTo(i, true));
+    dot.addEventListener('click', () => galDotTo(i));
     galDots.appendChild(dot);
   });
 
-  let galIndex = 0, galTimer = null;
-  function goTo(i, manual) {
-    galIndex = (i + GALLERY.length) % GALLERY.length;
-    galTrack.style.transform = `translateX(${-galIndex * 100}%)`;
-    $$('.gal-dot').forEach((d, n) => d.classList.toggle('is-active', n === galIndex));
+  const galSlides = $$('.gal-slide', galTrack);
+  let galPos = GAL_LEN;   // slide pertama pada salinan tengah
+  let galTimer = null;
+
+  /* Geseran dihitung dalam piksel dari lebar yang benar-benar terpakai
+     (offsetWidth mengabaikan transform scale pada slide samping), sehingga
+     otomatis ikut benar saat --gal-w berubah di breakpoint. */
+  const GAL_ANIM_MS = 800;   // samakan dengan transition .gal-track di CSS
+  let galNormTimer = null;
+
+  /* Proporsi mengikuti Figma node 20:1516 (frame 1440px):
+       tengah  438.667 × 329      → skala 1
+       ±1      394.8   × 296.1    → skala 0.9
+       ±2      315.84  × 236.88   → skala 0.72
+       jarak antar-slide 26.32px  → 0.06 × lebar slide tengah
+     Slide makin ke tepi makin redup, meniru gradasi abu pada desain. */
+  const GAL_SCALES     = [1, 0.9, 0.72];
+  const GAL_BRIGHTNESS = [1, 0.9, 0.78];
+  const GAL_GAP        = 26.32 / 438.667;
+  const galTier = d => Math.min(Math.abs(d), GAL_SCALES.length - 1);
+
+  /* Titik pusat visual slide berjarak d dari tengah, dalam satuan lebar
+     slide. Dijumlah bertahap: separuh slide sebelumnya + jarak + separuh
+     slide ini — supaya jarak antar-slide tetap seragam walau ukurannya
+     berbeda-beda (kotak layout-nya sendiri seragam). */
+  function galVisualCenter(d) {
+    let x = 0;
+    for (let k = 1; k <= Math.abs(d); k++) {
+      x += GAL_SCALES[galTier(k - 1)] / 2 + GAL_GAP + GAL_SCALES[galTier(k)] / 2;
+    }
+    return Math.sign(d) * x;
+  }
+
+  function galRender(animate) {
+    const slideW = galSlides[0] ? galSlides[0].offsetWidth : 0;
+    const offset = galTrack.offsetWidth / 2 - (galPos + 0.5) * slideW;
+
+    galTrack.style.transition = animate ? '' : 'none';
+    galSlides.forEach(s => { s.style.transition = animate ? '' : 'none'; });
+    void galTrack.offsetWidth;                       // paksa reflow sekali
+
+    galTrack.style.transform = `translate3d(${offset}px,0,0)`;
+    galSlides.forEach((s, n) => {
+      const d = n - galPos, t = galTier(d);
+      /* kotak layout ada di d×slideW; geser ke posisi visual yang diinginkan */
+      const tx = (galVisualCenter(d) - d) * slideW;
+      s.style.transform = `translateX(${tx}px) scale(${GAL_SCALES[t]})`;
+      s.style.filter = `brightness(${GAL_BRIGHTNESS[t]})`;
+      s.classList.toggle('is-center', n === galPos);
+    });
+
+    const real = ((galPos % GAL_LEN) + GAL_LEN) % GAL_LEN;
+    $$('.gal-dot').forEach((d, n) => d.classList.toggle('is-active', n === real));
+  }
+
+  /* Kembalikan posisi ke salinan tengah tanpa animasi setelah geseran
+     selesai — inilah yang membuat loop terasa tak berujung. */
+  function galNormalize() {
+    if (galPos < GAL_LEN || galPos >= GAL_LEN * 2) {
+      galPos = ((galPos % GAL_LEN) + GAL_LEN) % GAL_LEN + GAL_LEN;
+      galRender(false);
+    }
+  }
+  function galMoveTo(pos, manual) {
+    /* Tampilan butuh 2 slide tetangga di kiri & kanan, jadi posisi harus
+       selalu menyisakan ruang segitu. Kalau tujuan melewatinya (mis. panah
+       diklik cepat berkali-kali sebelum normalisasi sempat jalan), posisi
+       sekarang dirapatkan dulu ke salinan tengah tanpa animasi. */
+    const lo = 2, hi = galSlides.length - 3;
+    if (pos < lo || pos > hi) {
+      const delta = pos - galPos;
+      galPos = ((galPos % GAL_LEN) + GAL_LEN) % GAL_LEN + GAL_LEN;
+      galRender(false);
+      pos = Math.min(hi, Math.max(lo, galPos + delta));
+    }
+    galPos = pos;
+    galRender(true);
+    clearTimeout(galNormTimer);
+    galNormTimer = setTimeout(galNormalize, GAL_ANIM_MS + 60);
     if (manual) restartAuto();
   }
+  function galStep(dir, manual) { galMoveTo(galPos + dir, manual); }
+
+  /* Titik pagination: pilih salinan terdekat supaya jarak gesernya terpendek */
+  function galDotTo(real) {
+    let best = real;
+    for (let c = 0; c < GAL_COPIES; c++) {
+      const cand = real + c * GAL_LEN;
+      if (Math.abs(cand - galPos) < Math.abs(best - galPos)) best = cand;
+    }
+    galMoveTo(best, true);
+  }
+
+  /* Klik slide samping untuk memindahkannya ke tengah */
+  galSlides.forEach((s, n) => s.addEventListener('click', () => {
+    if (n !== galPos) galMoveTo(n, true);
+  }));
+
   function restartAuto() {
     clearInterval(galTimer);
-    if (!REDUCED) galTimer = setInterval(() => goTo(galIndex + 1), 5000);
+    if (!REDUCED) galTimer = setInterval(() => galStep(1), 5000);
   }
-  $('#galPrev').addEventListener('click', () => goTo(galIndex - 1, true));
-  $('#galNext').addEventListener('click', () => goTo(galIndex + 1, true));
+  $('#galPrev').addEventListener('click', () => galStep(-1, true));
+  $('#galNext').addEventListener('click', () => galStep(1, true));
+
+  galRender(false);
   restartAuto();
+  window.addEventListener('resize', () => galRender(false));
 
   /* Geser dengan sentuhan / pointer */
   (function swipe() {
@@ -475,7 +582,7 @@
     vp.addEventListener('pointerup', e => {
       if (x0 === null) return;
       const dx = e.clientX - x0;
-      if (Math.abs(dx) > 45) goTo(galIndex + (dx < 0 ? 1 : -1));
+      if (Math.abs(dx) > 45) galStep(dx < 0 ? 1 : -1, true);
       x0 = null; restartAuto();
     });
     vp.addEventListener('pointerleave', () => { x0 = null; });
@@ -685,8 +792,8 @@
         $$('.field', form).forEach(f => f.classList.remove('has-error'));
 
         const kind = form.dataset.form;
-        if (kind === 'teman')      toast('Jazakallahu khairan! Usulan temamu sudah kami terima.');
-        else if (kind === 'tanya') toast('Pertanyaanmu terkirim. Insyaallah dijawab saat siaran.');
+        if (kind === 'teman')         toast('Jazakallahu khairan! Usulan temamu sudah kami terima.');
+        else if (kind === 'curahan')  toast('Curahan hatimu sudah kami terima. Insyaallah segera kami tanggapi.');
         else { toast('Pendaftaran berhasil! Detail dikirim via WhatsApp.'); closeModal(); }
       }, 1100);
     });
@@ -879,12 +986,10 @@
   /* ======================================================================
      10. WAKTU SHOLAT — zona WIB (Jakarta) saja
      ====================================================================== */
-  /* Sholat fardu — dipakai untuk menentukan "berikutnya". */
+  /* Sholat fardu — dipakai untuk menentukan "berikutnya". Syuruq tetap
+     disimpan pada prayerTimes karena ikut diambil dari API, tapi tidak
+     pernah jadi "berikutnya" sebab bukan sholat fardu. */
   const FARDHU = ['Subuh', 'Zuhur', 'Ashar', 'Maghrib', 'Isya'];
-  /* Periode berjalan sepanjang hari. Syuruq menutup waktu Subuh, sehingga
-     rentang Syuruq→Zuhur disebut Dhuha, bukan "masih waktu Subuh". */
-  const PERIODS = ['Subuh', 'Syuruq', 'Zuhur', 'Ashar', 'Maghrib', 'Isya'];
-  const PERIOD_LABEL = { Syuruq: 'Dhuha' };
 
   /* Cadangan bila API tidak dapat dihubungi (mis. dibuka offline) */
   let prayerTimes = { Subuh: '04:38', Syuruq: '05:56', Zuhur: '11:55', Ashar: '15:14', Maghrib: '17:54', Isya: '19:04' };
@@ -898,16 +1003,13 @@
     return new Date(n.getTime() + n.getTimezoneOffset() * 60000 + 7 * 3600000);
   }
 
+  /* Urutan tampil jadwal lengkap pada popover (Syuruq ikut ditampilkan
+     sebagai penanda masuknya waktu Dhuha, walau bukan sholat fardu). */
+  const PERIODS = ['Subuh', 'Syuruq', 'Zuhur', 'Ashar', 'Maghrib', 'Isya'];
+
   function renderPrayer() {
     const w = nowWIB();
     const nowSec = w.getHours() * 3600 + w.getMinutes() * 60 + w.getSeconds();
-
-    /* Periode berjalan = periode terakhir yang waktunya sudah lewat.
-       Sebelum Subuh masih terhitung waktu Isya dari malam sebelumnya. */
-    let current = 'Isya';
-    for (let i = PERIODS.length - 1; i >= 0; i--) {
-      if (nowSec >= toSec(PERIODS[i])) { current = PERIODS[i]; break; }
-    }
 
     /* Fardu berikutnya (Syuruq/Dhuha dilewati karena bukan sholat fardu) */
     let next = FARDHU.find(p => toSec(p) > nowSec);
@@ -921,14 +1023,78 @@
 
     const h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60);
 
-    $('#psCurrent').textContent   = PERIOD_LABEL[current] || current;
     $('#psNext').textContent      = next;
     $('#psNextTime').textContent  = prayerTimes[next] + ' WIB';
     $('#psCountdown').textContent = h > 0 ? `${h} jam ${m} menit lagi` : `${m} menit lagi`;
+
+    /* Periode berjalan = periode terakhir yang waktunya sudah lewat hari
+       ini (dipakai untuk menyorot baris aktif pada jadwal lengkap). */
+    let current = 'Isya';
+    for (let i = PERIODS.length - 1; i >= 0; i--) {
+      if (nowSec >= toSec(PERIODS[i])) { current = PERIODS[i]; break; }
+    }
+    const list = $('#prayerPopList');
+    if (list) {
+      list.innerHTML = PERIODS.map(p => `
+        <li class="prayer-pop-row${p === current ? ' is-now' : ''}">
+          <span>${p}</span><span>${prayerTimes[p]}</span>
+        </li>`).join('');
+    }
   }
 
   renderPrayer();
   setInterval(renderPrayer, 30000);
+
+  /* Buka/tutup container jadwal sholat lengkap saat prayer-strip diklik. */
+  (function prayerPopover() {
+    const strip = $('#prayerStrip'), pop = $('#prayerPop');
+    if (!strip) return;
+    const close = () => {
+      strip.classList.remove('is-open');
+      strip.setAttribute('aria-expanded', 'false');
+      if (pop) pop.setAttribute('aria-hidden', 'true');
+    };
+    const toggle = () => {
+      const open = strip.classList.toggle('is-open');
+      strip.setAttribute('aria-expanded', String(open));
+      if (pop) pop.setAttribute('aria-hidden', String(!open));
+    };
+    strip.addEventListener('click', e => { if (!e.target.closest('.prayer-pop')) toggle(); });
+    strip.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      if (e.key === 'Escape') close();
+    });
+    document.addEventListener('click', e => { if (!strip.contains(e.target)) close(); });
+  })();
+
+  /* Strip tanggal Hijriah — pakai kalender Islamic bawaan Intl (ICU), akurat
+     tanpa perlu tabel konversi manual. Nama bulan dari ICU Indonesia sedikit
+     digabung tanpa spasi (mis. "Rabiulawal"), jadi dirapikan di sini supaya
+     sesuai penulisan umum ("Rabiul Awal"). */
+  const HIJRI_MONTH_FIX = {
+    Rabiulawal: 'Rabiul Awal', Rabiulakhir: 'Rabiul Akhir',
+    Jumadilawal: 'Jumadil Awal', Jumadilakhir: 'Jumadil Akhir'
+  };
+  const hijriFmt = new Intl.DateTimeFormat('id-ID-u-ca-islamic', {
+    timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+  function renderHijriDate() {
+    const parts = hijriFmt.formatToParts(new Date());
+    const get = t => (parts.find(p => p.type === t) || {}).value || '';
+    const month = HIJRI_MONTH_FIX[get('month')] || get('month');
+    $('#hijriDate').textContent = `${get('weekday')}, ${get('day')} ${month} ${get('year')} H`;
+  }
+  renderHijriDate();
+  setInterval(renderHijriDate, 60000);
+
+  /* Jam berjalan pada strip Hijriah — selalu zona WIB (Jakarta), apa pun
+     zona waktu perangkat pengunjung. */
+  const clockFmt = new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+  function renderHijriClock() { $('#hijriClock').textContent = clockFmt.format(new Date()); }
+  renderHijriClock();
+  setInterval(renderHijriClock, 1000);
 
   /* Jadwal aktual Jakarta (Aladhan, method 20 = Kemenag RI). Gagal? pakai cadangan. */
   (function fetchPrayerTimes() {
