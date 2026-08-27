@@ -52,7 +52,11 @@
         <p class="ps-next">
           Berikutnya <b id="psNext">—</b>
           <span class="ps-dot"></span><span id="psNextTime">—</span>
-          <span class="ps-dot"></span><span id="psCountdown">—</span>
+          <!-- Figma mobile (node 67:975) tidak menampilkan hitung mundur —
+               disembunyikan khusus mobile lewat .ps-countdown-wrap -->
+          <span class="ps-countdown-wrap">
+            <span class="ps-dot"></span><span id="psCountdown">—</span>
+          </span>
         </p>
       </div>
       <span class="ps-zone">WIB<small>Jakarta</small></span>
@@ -62,6 +66,12 @@
         <ul class="prayer-pop-list" id="prayerPopList"><!-- diisi script.js --></ul>
       </div>
     </aside>
+
+    <!-- Hanya tampil di mobile (Figma node 67:1003) -->
+    <button class="nav-toggle" id="navToggle" type="button"
+            aria-label="Buka menu" aria-expanded="false" aria-controls="navMenu">
+      <i class="ph-bold ph-list"></i>
+    </button>
   </nav>
 </header>
 
@@ -117,7 +127,7 @@
         <img class="hp hp--ustazah2" src="asset/hero-ustazah2.png" alt="" />
         <img class="hp hp--abeey"    src="asset/hero-abeey.png"    alt="" />
         <img class="hp hp--assad"    src="asset/hero-assad.png"    alt="" />
-        <img class="hero-caption"    src="asset/Teks Pelengkap.png" alt="" />
+        <img class="hero-caption"    src="asset/dipandu oleh.png" alt="" />
       </div>
     </div>
   </div>
@@ -145,6 +155,11 @@
   </div>
 
   <div class="shell">
+    <blockquote class="kajian-quote reveal">
+      <i class="ph-fill ph-quotes"></i>
+      <p>Wadah bagi Teman Hati di mana pun berada untuk berbagi informasi &amp; berinteraksi</p>
+    </blockquote>
+
     <header class="sec-head reveal">
       <p class="eyebrow">AGENDA</p>
       <h2 class="sec-title">Jadwal Kajian</h2>
@@ -155,7 +170,15 @@
     <div class="kajian-grid">
       <div class="kajian-list" id="kajianList"><!-- diisi script.js --></div>
 
-      <aside class="kajian-panel reveal" data-reveal-delay="120">
+      <!-- Di mobile panel ini berubah jadi bottom sheet (lihat @media di CSS);
+           backdrop & tombol tutup hanya tampil pada mode tersebut. -->
+      <div class="sheet-backdrop" id="kajianSheetBackdrop" data-close-sheet></div>
+
+      <aside class="kajian-panel reveal" data-reveal-delay="120" id="kajianPanel">
+        <button class="sheet-close" type="button" data-close-sheet aria-label="Tutup">
+          <i class="ph-bold ph-x"></i>
+        </button>
+        <span class="sheet-grip" aria-hidden="true"></span>
         <div class="panel-map">
           <iframe id="kajianMap" title="Peta lokasi kajian" loading="lazy"
                   referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
@@ -193,61 +216,60 @@
     <!-- Episode Terbaru -->
     <div class="block">
       <div class="block-head reveal">
-        <div>
-          <h3>Episode Terbaru</h3>
-          <p>Tayangan penuh dari episode terakhir Kalam Hati.</p>
-        </div>
-        <a href="https://www.youtube.com/@kalamhatikompastv/streams" target="_blank" rel="noopener" class="see-all">
-          LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
-        </a>
+        <h3>Episode Terbaru</h3>
+        <p>Tayangan penuh dari episode terakhir Kalam Hati.</p>
       </div>
 
       <div class="episode-grid">
         <article class="ep-main reveal" data-reveal-delay="60" id="epMain">
-          <div class="ep-main-art" id="epMainArt"></div>
+          <div class="ep-main-art" id="epMainArt">
+            <span class="live-badge" id="epMainLive" hidden><em></em> LIVE</span>
+          </div>
           <div class="ep-main-body">
-            <span class="live-badge"><em></em> TAYANG ULANG</span>
             <h4 id="epMainTitle"></h4>
             <div class="ep-meta">
               <span class="who" id="epMainWho"><i class="av" data-av="1"></i></span>
-              <span class="dot"></span>
-              <span><i class="ph ph-calendar-blank"></i> <span id="epMainDate"></span></span>
-              <span class="dot"></span>
-              <span><i class="ph ph-clock"></i> <span id="epMainTime"></span></span>
+              <span class="ep-meta-row">
+                <span><i class="ph ph-calendar-blank"></i> <span id="epMainDate"></span></span>
+                <span class="dot"></span>
+                <span><i class="ph ph-clock"></i> <span id="epMainTime"></span></span>
+              </span>
             </div>
           </div>
         </article>
 
         <div class="ep-list" id="epList"><!-- diisi script.js --></div>
       </div>
+
+      <a href="https://www.youtube.com/@kalamhatikompastv/streams" target="_blank" rel="noopener" class="see-all">
+        LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
+      </a>
     </div>
 
     <!-- Konten Harian -->
     <div class="block">
       <div class="block-head reveal">
-        <div>
-          <h3>Konten Harian</h3>
-          <p>Cuplikan pilihan dari Instagram dan TikTok Kalam Hati.</p>
-        </div>
-        <button type="button" class="see-all" data-open-platform>
-          LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
-        </button>
+        <h3>Konten Harian</h3>
+        <p>Cuplikan pilihan dari Instagram dan TikTok Kalam Hati.</p>
       </div>
       <div class="daily-grid" id="dailyGrid"><!-- diisi script.js --></div>
+
+      <button type="button" class="see-all" data-open-platform>
+        LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
+      </button>
     </div>
 
     <!-- Berita Hari Ini -->
     <div class="block">
       <div class="block-head reveal">
-        <div>
-          <h3>Berita Hari Ini</h3>
-          <p>Artikel seputar Kalam Hati dari redaksi KompasTV.</p>
-        </div>
-        <a href="https://www.kompas.tv/kalam-hati" target="_blank" rel="noopener" class="see-all">
-          LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
-        </a>
+        <h3>Berita Hari Ini</h3>
+        <p>Artikel seputar Kalam Hati dari redaksi KompasTV.</p>
       </div>
       <div class="news-grid" id="newsGrid"><!-- diisi script.js --></div>
+
+      <a href="https://www.kompas.tv/kalam-hati" target="_blank" rel="noopener" class="see-all">
+        LIHAT SEMUA <i class="ph-bold ph-arrow-right"></i>
+      </a>
     </div>
   </div>
 </section>
@@ -272,7 +294,6 @@
           <i class="ph-bold ph-caret-right"></i>
         </button>
       </div>
-      <div class="gal-dots" id="galDots" role="tablist" aria-label="Pilih foto"></div>
     </div>
   </div>
 </section>
@@ -286,8 +307,6 @@
     <header class="sec-head sec-head--onplum reveal">
       <p class="eyebrow">UNTUKMU, TEMAN HATI</p>
       <h2 class="sec-title sec-title--gold">Mari Berinteraksi</h2>
-      <p class="sec-desc">Suaramu menentukan tema kajian berikutnya. Sampaikan usulan atau
-        pertanyaanmu — insyaallah kami bacakan di studio.</p>
     </header>
 
     <div class="tabs reveal" data-reveal-delay="80">

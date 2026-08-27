@@ -336,30 +336,93 @@
   });
 
   const mapFrame = $('#kajianMap');
-  function showMap(i) {
+  /* Di mobile panel peta tampil sebagai bottom sheet dan baru dibuka saat
+     kartu kajian ditekan — jadi peta tidak boleh ikut dimuat sebelum itu. */
+  const sheetMQ = window.matchMedia('(max-width:860px)');
+  const kajianPanel = $('#kajianPanel');
+  const sheetBackdrop = $('#kajianSheetBackdrop');
+  let mapLoadedFor = -1;
+
+  function loadMap(i) {
+    if (mapLoadedFor === i) return;
     const k = KAJIAN[i];
     mapFrame.src = 'https://www.google.com/maps?q=' + encodeURIComponent(k.query) + '&z=16&output=embed';
+    mapLoadedFor = i;
+  }
+
+  /* markActive=false dipakai saat inisialisasi di mobile: info peta perlu
+     disiapkan (untuk saat sheet dibuka nanti / saat balik ke desktop), tapi
+     belum ada kartu yang boleh tampil aktif sebelum user benar-benar
+     mengetuknya. */
+  function showMap(i, markActive = true) {
+    const k = KAJIAN[i];
     $('#mapVenue').textContent = k.venueShort;
     $('#mapAddress').textContent = k.address;
     $('#mapDirections').href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(k.query);
     $$('.kj-card').forEach(c => {
-      const on = +c.dataset.index === i;
+      const on = markActive && +c.dataset.index === i;
       c.classList.toggle('is-active', on);
       c.setAttribute('aria-pressed', on);
     });
+    if (!sheetMQ.matches) loadMap(i);   // desktop: peta selalu terlihat
   }
-  showMap(0);
+
+  function openKajianSheet(i) {
+    loadMap(i);
+    $('.section-kajian').classList.add('sheet-open');
+    kajianPanel.classList.add('is-open');
+    sheetBackdrop.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeKajianSheet() {
+    $('.section-kajian').classList.remove('sheet-open');
+    kajianPanel.classList.remove('is-open');
+    sheetBackdrop.classList.remove('is-open');
+    document.body.style.overflow = '';
+    /* Kartu aktif hanya relevan selama sheet terbuka — begitu ditutup,
+       kembali ke kondisi default: tidak ada kartu yang aktif. */
+    $$('.kj-card').forEach(c => { c.classList.remove('is-active'); c.setAttribute('aria-pressed', 'false'); });
+  }
+
+  showMap(0, !sheetMQ.matches);   // mobile: belum ada kartu aktif sampai diketuk
   kajianList.addEventListener('click', e => {
     const card = e.target.closest('.kj-card');
-    if (card) showMap(+card.dataset.index);
+    if (!card) return;
+    const i = +card.dataset.index;
+    showMap(i);
+    if (sheetMQ.matches) openKajianSheet(i);
+  });
+  $$('[data-close-sheet]').forEach(el => el.addEventListener('click', closeKajianSheet));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && kajianPanel.classList.contains('is-open')) closeKajianSheet();
+  });
+  /* Kembali ke desktop saat sheet terbuka: tutup sheet & pastikan peta termuat */
+  sheetMQ.addEventListener('change', e => {
+    if (!e.matches) {
+      closeKajianSheet();
+      const active = $('.kj-card.is-active');
+      showMap(active ? +active.dataset.index : 0, true);
+    }
   });
 
   /* --- Pusat media --- */
-  $('#epMainArt').innerHTML = `<img src="${EP_MAIN.thumb}" alt="" loading="lazy">`;
+  /* insertAdjacentHTML (bukan innerHTML) — supaya badge LIVE yang sudah
+     ada di markup statis tidak ikut terhapus */
+  $('#epMainArt').insertAdjacentHTML('afterbegin', `<img src="${EP_MAIN.thumb}" alt="" loading="lazy" draggable="false">`);
   $('#epMainTitle').textContent = EP_MAIN.title;
   $('#epMainWho').innerHTML = `<i class="av" data-av="1"></i> ${EP_MAIN.who}`;
   $('#epMainDate').textContent = EP_MAIN.date;
   $('#epMainTime').textContent = EP_MAIN.time;
+
+  /* Badge LIVE hanya tampil kalau kajian memang sedang berlangsung —
+     Minggu, jam 13.00–13.59 WIB (jam siaran kajian mingguan). */
+  function updateLiveBadge() {
+    const w = nowWIB();
+    const isLive = w.getDay() === 0 && w.getHours() === 13;
+    $('#epMainLive').hidden = !isLive;
+  }
+  updateLiveBadge();
+  setInterval(updateLiveBadge, 30000);
 
   const epList = $('#epList');
   EPISODES.forEach((e, i) => {
@@ -368,7 +431,7 @@
     el.style.transitionDelay = (i * 90) + 'ms';
     el.dataset.href = ytUrl(e.id);
     el.innerHTML = `
-      <div class="ep-thumb"><img src="${e.thumb}" alt="" loading="lazy"></div>
+      <div class="ep-thumb"><img src="${e.thumb}" alt="" loading="lazy" draggable="false"></div>
       <div class="ep-item-body">
         <h4>${e.title}</h4>
         <div class="ep-item-meta">
@@ -404,7 +467,7 @@
     el.dataset.index = i;
     const thumb = d.poster || d.images[0];
     el.innerHTML = `
-      <div class="daily-art"><img src="${thumb}" alt="" loading="lazy"></div>
+      <div class="daily-art"><img src="${thumb}" alt="" loading="lazy" draggable="false"></div>
       <span class="daily-badge"><i class="ph-fill ${PLAT_ICON[d.plat]}"></i>${d.plat}</span>
       <div class="daily-overlay"><p class="daily-cap"></p></div>`;
     el.querySelector('.daily-cap').textContent = firstSentence(d.caption);
@@ -418,9 +481,10 @@
     a.href = n.link;
     a.target = '_blank';
     a.rel = 'noopener';
+    a.draggable = false;   /* <a> secara default draggable browser — ganggu slider mobile */
     a.style.transitionDelay = (i * 70) + 'ms';
     a.innerHTML = `
-      <div class="news-art"><img src="${n.image}" alt="" loading="lazy"></div>
+      <div class="news-art"><img src="${n.image}" alt="" loading="lazy" draggable="false"></div>
       <div class="news-body">
         <h4>${n.title}</h4>
         <div class="news-foot">
@@ -441,7 +505,7 @@
      di salinan tengah: setiap kali transisi selesai dan posisi keluar dari
      rentang salinan tengah, posisi dinormalkan tanpa animasi (efek "loop"
      tak berujung yang mulus). */
-  const galTrack = $('#galTrack'), galDots = $('#galDots');
+  const galTrack = $('#galTrack');
   const GAL_LEN = GALLERY.length;
   const GAL_COPIES = 3;
 
@@ -455,19 +519,9 @@
       galTrack.appendChild(slide);
     });
   }
-  GALLERY.forEach((_, i) => {
-    const dot = document.createElement('button');
-    dot.type = 'button';
-    dot.className = 'gal-dot' + (i === 0 ? ' is-active' : '');
-    dot.setAttribute('role', 'tab');
-    dot.setAttribute('aria-label', 'Foto ' + (i + 1));
-    dot.addEventListener('click', () => galDotTo(i));
-    galDots.appendChild(dot);
-  });
 
   const galSlides = $$('.gal-slide', galTrack);
   let galPos = GAL_LEN;   // slide pertama pada salinan tengah
-  let galTimer = null;
 
   /* Geseran dihitung dalam piksel dari lebar yang benar-benar terpakai
      (offsetWidth mengabaikan transform scale pada slide samping), sehingga
@@ -480,22 +534,35 @@
        ±1      394.8   × 296.1    → skala 0.9
        ±2      315.84  × 236.88   → skala 0.72
        jarak antar-slide 26.32px  → 0.06 × lebar slide tengah
-     Slide makin ke tepi makin redup, meniru gradasi abu pada desain. */
+     Slide makin ke tepi makin redup, meniru gradasi abu pada desain.
+     Nilainya diinterpolasi kontinu (bukan lompat per-tingkat) supaya
+     mulus dipakai gerakan marquee yang posisinya pecahan, bukan cuma
+     bilangan bulat. */
   const GAL_SCALES     = [1, 0.9, 0.72];
   const GAL_BRIGHTNESS = [1, 0.9, 0.78];
   const GAL_GAP        = 26.32 / 438.667;
-  const galTier = d => Math.min(Math.abs(d), GAL_SCALES.length - 1);
+  function galLerpAt(table, d) {
+    const ad = Math.min(Math.abs(d), table.length - 1);
+    const lo = Math.floor(ad), hi = Math.min(lo + 1, table.length - 1);
+    const f = ad - lo;
+    return table[lo] + (table[hi] - table[lo]) * f;
+  }
 
   /* Titik pusat visual slide berjarak d dari tengah, dalam satuan lebar
      slide. Dijumlah bertahap: separuh slide sebelumnya + jarak + separuh
      slide ini — supaya jarak antar-slide tetap seragam walau ukurannya
-     berbeda-beda (kotak layout-nya sendiri seragam). */
+     berbeda-beda (kotak layout-nya sendiri seragam). d boleh pecahan
+     (posisi marquee kontinu), sisa langkah terakhir diinterpolasi linear. */
   function galVisualCenter(d) {
+    const ad = Math.abs(d), sign = Math.sign(d), full = Math.floor(ad), frac = ad - full;
     let x = 0;
-    for (let k = 1; k <= Math.abs(d); k++) {
-      x += GAL_SCALES[galTier(k - 1)] / 2 + GAL_GAP + GAL_SCALES[galTier(k)] / 2;
+    for (let k = 1; k <= full; k++) {
+      x += galLerpAt(GAL_SCALES, k - 1) / 2 + GAL_GAP + galLerpAt(GAL_SCALES, k) / 2;
     }
-    return Math.sign(d) * x;
+    if (frac > 0) {
+      x += (galLerpAt(GAL_SCALES, full) / 2 + GAL_GAP + galLerpAt(GAL_SCALES, full + 1) / 2) * frac;
+    }
+    return sign * x;
   }
 
   function galRender(animate) {
@@ -504,20 +571,17 @@
 
     galTrack.style.transition = animate ? '' : 'none';
     galSlides.forEach(s => { s.style.transition = animate ? '' : 'none'; });
-    void galTrack.offsetWidth;                       // paksa reflow sekali
+    if (animate) void galTrack.offsetWidth;          // paksa reflow hanya utk snap beranimasi
 
     galTrack.style.transform = `translate3d(${offset}px,0,0)`;
     galSlides.forEach((s, n) => {
-      const d = n - galPos, t = galTier(d);
+      const d = n - galPos;
       /* kotak layout ada di d×slideW; geser ke posisi visual yang diinginkan */
       const tx = (galVisualCenter(d) - d) * slideW;
-      s.style.transform = `translateX(${tx}px) scale(${GAL_SCALES[t]})`;
-      s.style.filter = `brightness(${GAL_BRIGHTNESS[t]})`;
-      s.classList.toggle('is-center', n === galPos);
+      s.style.transform = `translateX(${tx}px) scale(${galLerpAt(GAL_SCALES, d)})`;
+      s.style.filter = `brightness(${galLerpAt(GAL_BRIGHTNESS, d)})`;
+      s.classList.toggle('is-center', Math.abs(d) < 0.5);
     });
-
-    const real = ((galPos % GAL_LEN) + GAL_LEN) % GAL_LEN;
-    $$('.gal-dot').forEach((d, n) => d.classList.toggle('is-active', n === real));
   }
 
   /* Kembalikan posisi ke salinan tengah tanpa animasi setelah geseran
@@ -544,46 +608,59 @@
     galRender(true);
     clearTimeout(galNormTimer);
     galNormTimer = setTimeout(galNormalize, GAL_ANIM_MS + 60);
-    if (manual) restartAuto();
+    if (manual) pauseGalMarquee(2500);
   }
-  function galStep(dir, manual) { galMoveTo(galPos + dir, manual); }
+  function galStep(dir, manual) { galMoveTo(Math.round(galPos) + dir, manual); }
 
-  /* Titik pagination: pilih salinan terdekat supaya jarak gesernya terpendek */
-  function galDotTo(real) {
-    let best = real;
-    for (let c = 0; c < GAL_COPIES; c++) {
-      const cand = real + c * GAL_LEN;
-      if (Math.abs(cand - galPos) < Math.abs(best - galPos)) best = cand;
-    }
-    galMoveTo(best, true);
-  }
-
-  /* Klik slide samping untuk memindahkannya ke tengah */
+  /* Klik slide samping untuk memindahkannya ke tengah (ambang .05 supaya
+     slide yang kebetulan sudah nyaris di tengah — posisi marquee kan
+     pecahan terus — tidak ikut memicu "snap" sekecil apa pun) */
   galSlides.forEach((s, n) => s.addEventListener('click', () => {
-    if (n !== galPos) galMoveTo(n, true);
+    if (Math.abs(n - galPos) > 0.05) galMoveTo(n, true);
   }));
 
-  function restartAuto() {
-    clearInterval(galTimer);
-    if (!REDUCED) galTimer = setInterval(() => galStep(1), 5000);
+  /* --- Marquee: bergeser sendiri pelan & terus-menerus (bukan lompat
+     per-slide tiap beberapa detik) — dijeda sebentar tiap kali pengguna
+     berinteraksi (panah/klik/geser), lalu jalan lagi sendiri. */
+  const GAL_DRIFT_SPEED = 1 / 9;   // ~9 detik per slide — pelan, bukan marquee "kencang"
+  let galDriftPaused = false, galDriftLastT = null, galDriftResumeTimer = null;
+  function pauseGalMarquee(resumeAfterMs) {
+    galDriftPaused = true;
+    clearTimeout(galDriftResumeTimer);
+    if (resumeAfterMs != null) {
+      galDriftResumeTimer = setTimeout(() => { galDriftPaused = false; galDriftLastT = null; }, resumeAfterMs);
+    }
   }
+  function galDriftTick(t) {
+    if (galDriftLastT == null) galDriftLastT = t;
+    const dt = Math.min(.1, (t - galDriftLastT) / 1000);
+    galDriftLastT = t;
+    if (!galDriftPaused) {
+      galPos += GAL_DRIFT_SPEED * dt;
+      if (galPos >= GAL_LEN * 2) galPos -= GAL_LEN;   // lompat identik-visual, tanpa kedip
+      galRender(false);
+    }
+    requestAnimationFrame(galDriftTick);
+  }
+
   $('#galPrev').addEventListener('click', () => galStep(-1, true));
   $('#galNext').addEventListener('click', () => galStep(1, true));
 
   galRender(false);
-  restartAuto();
+  if (!REDUCED) requestAnimationFrame(galDriftTick);   // hormati "reduced motion" — statis saja
   window.addEventListener('resize', () => galRender(false));
 
   /* Geser dengan sentuhan / pointer */
   (function swipe() {
     const vp = $('.gal-viewport');
     let x0 = null;
-    vp.addEventListener('pointerdown', e => { x0 = e.clientX; clearInterval(galTimer); });
+    vp.addEventListener('pointerdown', e => { x0 = e.clientX; pauseGalMarquee(); });
     vp.addEventListener('pointerup', e => {
       if (x0 === null) return;
       const dx = e.clientX - x0;
       if (Math.abs(dx) > 45) galStep(dx < 0 ? 1 : -1, true);
-      x0 = null; restartAuto();
+      else pauseGalMarquee(2500);
+      x0 = null;
     });
     vp.addEventListener('pointerleave', () => { x0 = null; });
   })();
@@ -645,6 +722,60 @@
   }, { passive: true });
   onScroll();
 
+  /* Scroll "slow motion" tipis ala Framer — khusus perangkat dengan mouse
+     wheel/trackpad (desktop; layar sentuh dibiarkan native karena sudah
+     punya momentum sendiri yang lebih baik). Bukan scroll virtual/library
+     terpisah: posisi scroll ASLI tetap yang digeser tiap frame (cuma
+     sedikit demi sedikit, bukan langsung), jadi semua yang bergantung pada
+     posisi scroll asli di atas (progress bar, parallax, reveal, scrollspy)
+     tetap jalan seperti biasa. Elemen yang punya scroll internalnya sendiri
+     (modal, popup jadwal sholat, dsb.) sengaja dilewati supaya tetap bisa
+     di-scroll dengan wheel secara normal. */
+  (function smoothWheelScroll() {
+    if (REDUCED || !window.matchMedia('(pointer:fine)').matches) return;
+
+    const EASE = 0.35;   // mendekati 1 = nyaris native; makin kecil makin "melambat"
+    let targetY = window.scrollY, raf = null;
+
+    function maxScroll() { return Math.max(0, document.documentElement.scrollHeight - window.innerHeight); }
+
+    function hasInnerScroll(el, deltaY) {
+      while (el && el !== document.documentElement) {
+        const cs = getComputedStyle(el);
+        if (/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight) {
+          const atTop = el.scrollTop <= 0, atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+          if ((deltaY < 0 && !atTop) || (deltaY > 0 && !atBottom)) return true;
+        }
+        el = el.parentElement;
+      }
+      return false;
+    }
+
+    function tick() {
+      const cur = window.scrollY, diff = targetY - cur;
+      if (Math.abs(diff) < .5) { window.scrollTo({ top: targetY, behavior: 'instant' }); raf = null; return; }
+      window.scrollTo({ top: cur + diff * EASE, behavior: 'instant' });
+      raf = requestAnimationFrame(tick);
+    }
+
+    window.addEventListener('wheel', e => {
+      if (e.ctrlKey || hasInnerScroll(e.target, e.deltaY)) return;   // zoom / scroll internal — biarkan native
+      e.preventDefault();
+      targetY = Math.min(maxScroll(), Math.max(0, targetY + e.deltaY));
+      if (!raf) raf = requestAnimationFrame(tick);
+    }, { passive: false });
+
+    /* Scroll dari sumber lain (klik menu, tombol kembali ke atas, dsb.)
+       jadi acuan target baru — supaya wheel berikutnya tidak "menarik
+       mundur" ke target lama yang sudah basi. */
+    let syncTimer = null;
+    window.addEventListener('scroll', () => {
+      if (raf) return;   // lagi kita animasikan sendiri — abaikan gemanya
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => { targetY = window.scrollY; }, 50);
+    }, { passive: true });
+  })();
+
   /* Tombol magnetic */
   if (!REDUCED && window.matchMedia('(hover:hover)').matches) {
     $$('.magnetic').forEach(btn => {
@@ -686,7 +817,27 @@
   requestAnimationFrame(() => setActive('beranda'));
   window.addEventListener('load', () => setActive(currentSection()));
   window.addEventListener('resize', () => movePill($('.nav-link.is-active')));
-  navLinks.forEach(l => l.addEventListener('click', () => setActive(l.dataset.target)));
+
+  /* Drawer menu mobile (tombol hamburger, Figma node 67:1003) */
+  const navMenu = $('#navMenu'), navToggle = $('#navToggle');
+  function closeNavMenu() {
+    navMenu.classList.remove('is-open');
+    navToggle.setAttribute('aria-expanded', 'false');
+    navToggle.querySelector('i').className = 'ph-bold ph-list';
+  }
+  navToggle.addEventListener('click', e => {
+    e.stopPropagation();
+    const open = navMenu.classList.toggle('is-open');
+    navToggle.setAttribute('aria-expanded', String(open));
+    navToggle.querySelector('i').className = open ? 'ph-bold ph-x' : 'ph-bold ph-list';
+  });
+  document.addEventListener('click', e => {
+    if (navMenu.classList.contains('is-open') &&
+        !navMenu.contains(e.target) && !navToggle.contains(e.target)) closeNavMenu();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNavMenu(); });
+
+  navLinks.forEach(l => l.addEventListener('click', () => { setActive(l.dataset.target); closeNavMenu(); }));
 
   let spyTick = false;
   window.addEventListener('scroll', () => {
@@ -792,8 +943,8 @@
         $$('.field', form).forEach(f => f.classList.remove('has-error'));
 
         const kind = form.dataset.form;
-        if (kind === 'teman')         toast('Jazakallahu khairan! Usulan temamu sudah kami terima.');
-        else if (kind === 'curahan')  toast('Curahan hatimu sudah kami terima. Insyaallah segera kami tanggapi.');
+        if (kind === 'teman')         toast('Jazakallahu khairan! Terima kasih atas usulanmu, akan kami pertimbangkan.');
+        else if (kind === 'curahan')  toast('Curahan hatimu sudah kami terima. Pertanyaanmu akan dijawab pada kajian selanjutnya.');
         else { toast('Pendaftaran berhasil! Detail dikirim via WhatsApp.'); closeModal(); }
       }, 1100);
     });
@@ -935,7 +1086,12 @@
   }
 
   document.addEventListener('click', e => {
-    if (e.target.closest('[data-open-daftar]')) { e.preventDefault(); openModal(); }
+    /* Dari bottom sheet peta, "Daftar" menutup sheet lalu membuka sheet form */
+    if (e.target.closest('[data-open-daftar]')) {
+      e.preventDefault();
+      closeKajianSheet();
+      openModal();
+    }
     if (e.target.closest('[data-open-platform]')) { e.preventDefault(); openPlatformModal(); }
 
     const dailyCard = e.target.closest('.daily');
@@ -973,7 +1129,11 @@
     t.querySelector('i').className = kind === 'warning' ? 'ph-fill ph-warning-circle' : 'ph-fill ph-check-circle';
     t.classList.add('is-show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('is-show'), 4200);
+    /* Lama tampil menyesuaikan panjang pesan (±70ms/karakter, dengan batas
+       bawah 4.2 dtk dan atas 9 dtk) — pesan sukses pendaftaran/curahan
+       cukup panjang, jangan sampai hilang sebelum sempat terbaca. */
+    const duration = Math.min(9000, Math.max(4200, msg.length * 70));
+    toastTimer = setTimeout(() => t.classList.remove('is-show'), duration);
   }
 
   $('#toTop').addEventListener('click', () =>
