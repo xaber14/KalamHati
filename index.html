@@ -224,6 +224,7 @@
         <article class="ep-main reveal" data-reveal-delay="60" id="epMain">
           <div class="ep-main-art" id="epMainArt">
             <span class="live-badge" id="epMainLive" hidden><em></em> LIVE</span>
+            <span class="live-badge live-badge--latest" id="epMainLatest" hidden>Terbaru</span>
           </div>
           <div class="ep-main-body">
             <h4 id="epMainTitle"></h4>
@@ -284,15 +285,10 @@
       <p class="sec-desc">Saksikan terus kegiatan kami selama acara kajian</p>
     </header>
 
+    <!-- Tanpa tombol panah — navigasi lewat geser/drag langsung (lihat swipe() di script.js) -->
     <div class="gallery reveal" data-reveal-delay="80">
       <div class="gal-viewport">
         <div class="gal-track" id="galTrack"><!-- diisi script.js --></div>
-        <button class="gal-arrow gal-arrow--prev" id="galPrev" aria-label="Foto sebelumnya">
-          <i class="ph-bold ph-caret-left"></i>
-        </button>
-        <button class="gal-arrow gal-arrow--next" id="galNext" aria-label="Foto berikutnya">
-          <i class="ph-bold ph-caret-right"></i>
-        </button>
       </div>
     </div>
   </div>

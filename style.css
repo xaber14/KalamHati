@@ -477,8 +477,9 @@ ul{list-style:none}
 .ep-main-art{height:349px;position:relative;overflow:hidden;background:#f1f1f1}
 .ep-main-art svg,.ep-main-art img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .9s var(--smooth)}
 .ep-main-body{padding:16px 24px 24px;display:flex;flex-direction:column;gap:12px}
-/* Muncul di pojok kanan-atas thumbnail, hanya saat kajian benar-benar
-   sedang live (lihat updateLiveBadge() di script.js) */
+/* Muncul di pojok kanan-atas thumbnail — LIVE hanya saat kajian benar-benar
+   sedang berlangsung, "Terbaru" di luar jam itu; keduanya saling eksklusif
+   (lihat updateEpisodeBadge() di script.js), berlaku desktop & mobile. */
 .live-badge{position:absolute;top:12px;right:12px;z-index:2;
   display:inline-flex;align-items:center;gap:8px;
   background:#E4483D;color:#fff;border-radius:var(--r-pill);
@@ -487,6 +488,7 @@ ul{list-style:none}
 .live-badge em{width:8px;height:8px;border-radius:50%;background:#fff;
   box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:pulse 2s infinite}
 @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+.live-badge--latest{background:#fff;color:var(--plum)}
 .ep-main-body h4{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.22}
 /* Nama narasumber di baris sendiri (tanpa titik pemisah), tanggal & waktu
    di baris berikutnya — meniru pola .ep-item-meta yang sudah benar,
@@ -595,15 +597,6 @@ ul{list-style:none}
    memang dipangkas — ini pilihan yang disepakati agar tidak ada ruang
    kosong di dalam kotak. */
 .gal-slide svg,.gal-slide img{width:100%;height:100%;display:block;object-fit:cover}
-.gal-arrow{
-  position:absolute;top:50%;transform:translateY(-50%);z-index:3;
-  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:20px;
-  background:rgba(255,255,255,.92);color:var(--plum);box-shadow:var(--shadow-md);
-  transition:transform .4s var(--spring),background .3s
-}
-.gal-arrow:hover{background:#fff;transform:translateY(-50%) scale(1.1)}
-.gal-arrow--prev{left:16px}
-.gal-arrow--next{right:16px}
 
 /* --------------------------- 12. Mari Berinteraksi ------------------------ */
 .section-interaksi{background:var(--plum-deep);overflow:hidden;padding-top:clamp(72px,7vw,96px)}
@@ -878,7 +871,7 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:13px;color:var(-
 }
 
 .toast{position:fixed;left:50%;bottom:28px;z-index:300;display:flex;align-items:center;gap:.65rem;
-  padding:.9rem 1.35rem;border-radius:var(--r-pill);background:var(--grad-fig);
+  width:300px;padding:.9rem 1.35rem;border-radius:var(--r-lg);background:var(--grad-fig);
   border:1px solid rgba(241,212,120,.45);color:#fff;font-size:14px;font-weight:600;
   box-shadow:var(--shadow-lg);transform:translate(-50%,120%);opacity:0;
   transition:transform .6s var(--spring),opacity .35s var(--smooth);max-width:calc(100% - 40px)}
@@ -942,7 +935,6 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:13px;color:var(-
   .kj-date{flex-direction:row;align-items:baseline;justify-content:center;gap:10px;padding:8px 12px}
   .panel-actions{flex-direction:column}
   .gallery{--gal-w:52%}
-  .gal-arrow{width:40px;height:40px;font-size:16px}
 }
 
 @media (max-width:640px){
@@ -1024,7 +1016,7 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:13px;color:var(-
      overlay di atas figur (bukan blok terpisah di bawahnya seperti
      sebelumnya) — jadi hero-caption dikembalikan tampil, host-note
      dikembalikan jadi teks aksesibilitas saja (sr-only, seperti desktop). */
-  .hero-caption{display:block;left:50%;top:auto;bottom:9.8%;width:58%;transform:translateX(-50%)}
+  .hero-caption{display:block;left:50%;top:auto;bottom:9.8%;width:52%;transform:translateX(-50%)}
   .host-note{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
     clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 
@@ -1131,7 +1123,14 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:13px;color:var(-
     /* tanpa scroll-padding, snap menarik kartu pertama menempel ke tepi
        dan padding-inline jadi tertelan */
     scroll-snap-type:x mandatory;scroll-padding-inline:16px;
-    scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    /* -webkit-overflow-scrolling:touch SENGAJA tidak dipakai — properti
+       legacy ini di Safari/iOS lama punya bug terkenal: begitu dipasang
+       bareng touch-action, gesture SCROLL VERTIKAL yang dimulai di atas
+       elemen ini malah tetap "ditelan" ke elemen ini alih-alih diteruskan
+       ke halaman, walau touch-action sudah bilang cuma pan-x. Modern
+       browser sudah momentum-scroll otomatis lewat overflow-x:auto biasa
+       tanpa properti ini, jadi aman dihilangkan. */
   }
   .ep-list::-webkit-scrollbar,
   .daily-grid::-webkit-scrollbar,
@@ -1164,6 +1163,10 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:13px;color:var(-
   .daily{width:min(46%,180px)}
   .news{width:min(62%,230px)}
   .episode-grid{grid-template-columns:1fr;gap:16px}
+
+  /* kategori & tanggal card berita jadi atas-bawah, bukan sejajar */
+  .news-foot{flex-direction:column;align-items:flex-start;gap:4px}
+  .news-foot .dot{display:none}
 
   /* ---------- Mari Berinteraksi ------------------------------------------ */
   .tab i{display:none}   /* ikon tab cuma dipakai di desktop */

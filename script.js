@@ -415,14 +415,16 @@
   $('#epMainTime').textContent = EP_MAIN.time;
 
   /* Badge LIVE hanya tampil kalau kajian memang sedang berlangsung —
-     Minggu, jam 13.00–13.59 WIB (jam siaran kajian mingguan). */
-  function updateLiveBadge() {
+     Minggu, jam 13.00–13.59 WIB (jam siaran kajian mingguan). Di luar jam
+     itu badge "Terbaru" yang tampil — keduanya saling eksklusif. */
+  function updateEpisodeBadge() {
     const w = nowWIB();
     const isLive = w.getDay() === 0 && w.getHours() === 13;
     $('#epMainLive').hidden = !isLive;
+    $('#epMainLatest').hidden = isLive;
   }
-  updateLiveBadge();
-  setInterval(updateLiveBadge, 30000);
+  updateEpisodeBadge();
+  setInterval(updateEpisodeBadge, 30000);
 
   const epList = $('#epList');
   EPISODES.forEach((e, i) => {
@@ -643,26 +645,49 @@
     requestAnimationFrame(galDriftTick);
   }
 
-  $('#galPrev').addEventListener('click', () => galStep(-1, true));
-  $('#galNext').addEventListener('click', () => galStep(1, true));
-
   galRender(false);
   if (!REDUCED) requestAnimationFrame(galDriftTick);   // hormati "reduced motion" — statis saja
   window.addEventListener('resize', () => galRender(false));
 
-  /* Geser dengan sentuhan / pointer */
+  /* Geser manual dengan sentuhan / mouse — berlaku desktop & mobile.
+     Arah gesture baru ditentukan setelah bergerak >8px: kalau dominan
+     horizontal, carousel "mengikuti" jari secara live (setPointerCapture
+     supaya tetap lengket walau jari sempat keluar batas viewport — ini
+     yang bikin swipe di layar sentuh terasa andal, bukan cuma terdeteksi
+     saat lepas jari); kalau dominan vertikal, dilepas sepenuhnya supaya
+     halaman tetap bisa di-scroll seperti biasa. */
   (function swipe() {
     const vp = $('.gal-viewport');
-    let x0 = null;
-    vp.addEventListener('pointerdown', e => { x0 = e.clientX; pauseGalMarquee(); });
-    vp.addEventListener('pointerup', e => {
-      if (x0 === null) return;
-      const dx = e.clientX - x0;
-      if (Math.abs(dx) > 45) galStep(dx < 0 ? 1 : -1, true);
-      else pauseGalMarquee(2500);
-      x0 = null;
+    let active = false, isHorizontal = null, x0 = 0, y0 = 0, startPos = 0;
+    const DIR_THRESHOLD = 8;
+
+    vp.addEventListener('pointerdown', e => {
+      active = true; isHorizontal = null; x0 = e.clientX; y0 = e.clientY; startPos = galPos;
+      pauseGalMarquee();
     });
-    vp.addEventListener('pointerleave', () => { x0 = null; });
+    vp.addEventListener('pointermove', e => {
+      if (!active) return;
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      if (isHorizontal === null) {
+        if (Math.abs(dx) < DIR_THRESHOLD && Math.abs(dy) < DIR_THRESHOLD) return;
+        isHorizontal = Math.abs(dx) > Math.abs(dy);
+        if (isHorizontal) { try { vp.setPointerCapture(e.pointerId); } catch (err) {} }
+      }
+      if (!isHorizontal) return;   // gesture vertikal → biarkan halaman scroll native
+      e.preventDefault();
+      const slideW = galSlides[0] ? galSlides[0].offsetWidth : 1;
+      galPos = startPos - dx / slideW;
+      galRender(false);
+    });
+    function endDrag() {
+      if (!active) return;
+      active = false;
+      if (isHorizontal) galMoveTo(Math.round(galPos), true);
+      else pauseGalMarquee(2500);
+      isHorizontal = null;
+    }
+    vp.addEventListener('pointerup', endDrag);
+    vp.addEventListener('pointercancel', endDrag);
   })();
 
   /* --- Pilihan narasumber pada form tanya --- */
