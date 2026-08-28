@@ -39,6 +39,7 @@
       <li><a href="#beranda" class="nav-link is-active" data-target="beranda">Beranda</a></li>
       <li><a href="#jadwal-kajian" class="nav-link" data-target="jadwal-kajian">Jadwal Kajian</a></li>
       <li><a href="#pusat-media" class="nav-link" data-target="pusat-media">Pusat Media</a></li>
+      <li><a href="#galeri" class="nav-link" data-target="galeri">Galeri</a></li>
       <li><a href="#mari-berinteraksi" class="nav-link" data-target="mari-berinteraksi">Mari Berinteraksi</a></li>
       <span class="nav-pill" id="navPill" aria-hidden="true"></span>
     </ul>
@@ -282,7 +283,7 @@
 </section>
 
 
-<!-- ============ 4. GALERI (Figma 20:1516) ============ -->
+<!-- ============ 4. GALERI (Figma 87:21) — album per event ============ -->
 <section class="section section-galeri" id="galeri">
   <div class="shell">
     <header class="sec-head reveal">
@@ -291,20 +292,20 @@
       <p class="sec-desc">Saksikan terus kegiatan kami selama acara kajian</p>
     </header>
 
-    <!-- Tab batch/acara — tombolnya diisi script.js dari GALLERY_BATCHES -->
-    <div class="tab-bar tab-bar--light gal-tab-bar reveal" data-reveal-delay="40" role="tablist" id="galTabBar">
-      <span class="tab-glider" id="galTabGlider" aria-hidden="true"></span>
-    </div>
-
-    <!-- Tanpa tombol panah — navigasi lewat geser/drag langsung (lihat swipe() di script.js) -->
-    <div class="gallery reveal" data-reveal-delay="80">
-      <div class="gal-viewport">
-        <div class="gal-track" id="galTrack"><!-- diisi script.js --></div>
+    <!-- Deretan album (satu kartu = satu event). Kartunya diisi script.js
+         dari GALLERY_ALBUMS; panah kiri/kanan mengikuti Figma, tapi deretan
+         ini juga tetap bisa digeser manual dengan mouse/jari. -->
+    <div class="albums reveal" data-reveal-delay="80">
+      <button class="alb-arrow alb-arrow--prev" id="albPrev" type="button" aria-label="Album sebelumnya">
+        <i class="ph-bold ph-caret-left"></i>
+      </button>
+      <div class="alb-viewport" id="albViewport">
+        <div class="alb-track" id="albTrack"><!-- diisi script.js --></div>
       </div>
+      <button class="alb-arrow alb-arrow--next" id="albNext" type="button" aria-label="Album berikutnya">
+        <i class="ph-bold ph-caret-right"></i>
+      </button>
     </div>
-
-    <!-- Pagination kecil — satu titik per foto pada batch aktif, diisi script.js -->
-    <div class="gal-dots" id="galDots" aria-hidden="true"></div>
   </div>
 </section>
 
@@ -475,6 +476,46 @@
 
 <button class="to-top" id="toTop" aria-label="Kembali ke atas"><i class="ph-bold ph-arrow-up"></i></button>
 
+<!-- ============ MODAL ALBUM GALERI (foto besar + pilihan foto lain) ============ -->
+<div class="modal modal--album" id="modalAlbum" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="albumTitle">
+  <div class="modal-backdrop" data-close-modal></div>
+
+  <!-- Susunan satu kolom, dari atas ke bawah:
+       judul + tanggal (tombol tutup sebaris di kanannya) → foto besar
+       → deskripsi → pilihan foto. -->
+  <div class="album-modal-card">
+    <div class="album-modal-head">
+      <div class="album-modal-head-text">
+        <h3 id="albumTitle">—</h3>
+        <p class="album-modal-date" id="albumModalDate">—</p>
+      </div>
+      <button class="album-modal-close" data-close-modal aria-label="Tutup"><i class="ph-bold ph-x"></i></button>
+    </div>
+
+    <!-- Foto besar. Rasio 1:1 & object-fit:contain — foto landscape
+         dipaskan utuh ke dalam frame, tidak dipotong. -->
+    <div class="album-modal-media">
+      <img id="albumModalImg" src="" alt="" />
+      <button class="daily-modal-arrow daily-modal-arrow--prev" data-album-slide="-1" aria-label="Foto sebelumnya">
+        <i class="ph-bold ph-caret-left"></i>
+      </button>
+      <button class="daily-modal-arrow daily-modal-arrow--next" data-album-slide="1" aria-label="Foto berikutnya">
+        <i class="ph-bold ph-caret-right"></i>
+      </button>
+    </div>
+
+    <div class="album-modal-body">
+      <p class="album-modal-caption" id="albumModalCaption">—</p>
+    </div>
+
+    <!-- Pilihan foto lain di album ini — diisi script.js -->
+    <div class="album-modal-foot">
+      <p class="album-modal-count"><span id="albumModalCount">—</span></p>
+      <div class="album-thumbs" id="albumThumbs"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ MODAL KONTEN HARIAN (gaya pop-up Instagram) ============ -->
 <div class="modal modal--daily" id="modalDaily" aria-hidden="true" role="dialog" aria-modal="true">
   <div class="modal-backdrop" data-close-modal></div>
@@ -581,6 +622,21 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ============ MODAL PEMBERITAHUAN BERHASIL ============ -->
+<!-- Dipakai setelah kirim form Daftar Kajian, Curahan Hati, & Ruang Teman
+     Hati. Judul + pesannya diisi script.js sesuai form yang dikirim. -->
+<div class="modal modal--sukses" id="modalSukses" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="suksesTitle">
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-card sukses-card">
+    <span class="sukses-icon" aria-hidden="true"><i class="ph-bold ph-check"></i></span>
+    <h3 id="suksesTitle">—</h3>
+    <p class="sukses-msg" id="suksesMsg">—</p>
+    <button class="btn btn-fig btn-fig-primary btn-block magnetic" type="button" data-close-modal>
+      <span>Oke, Mengerti</span>
+    </button>
   </div>
 </div>
 

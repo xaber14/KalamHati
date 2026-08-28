@@ -161,17 +161,63 @@
     }
   ];
 
-  /* Galeri dibagi per batch/acara — tiap tab tampilkan fotonya sendiri.
-     Baru ada 3 file foto asli di asset/, jadi untuk sementara tiap batch
-     memakai 3 foto yang sama tapi urutannya dirotasi (bukan diduplikasi
-     identik) supaya waktu tab diganti kelihatan bedanya. GANTI array
-     `photos` di bawah dengan foto asli tiap acara begitu sudah tersedia —
-     boleh beda jumlah antar-batch, tidak harus selalu 3. */
-  const GALLERY_BATCHES = [
-    { label: 'Batch 1', photos: ['asset/Gallery 1.jpg', 'asset/Gallery 2.jpg', 'asset/Gallery 3.jpg'] },
-    { label: 'Batch 2', photos: ['asset/Gallery 2.jpg', 'asset/Gallery 3.jpg', 'asset/Gallery 1.jpg'] },
-    { label: 'Batch 3', photos: ['asset/Gallery 3.jpg', 'asset/Gallery 1.jpg', 'asset/Gallery 2.jpg'] }
+  /* Galeri = kumpulan ALBUM, satu album per event (Figma node 87:21).
+
+     FOTO: asset/album-N.jpg (maks 1400px, untuk pop-up) dan
+     asset/album-N-cover.jpg (720px, khusus thumbnail album) — hasil kompresi
+     dari "Foto Album N.jpg" (13,6 MB -> 2,5 MB). File aslinya sengaja tidak
+     ditimpa, masih tersimpan di folder yang sama.
+
+     Sepuluh foto yang sama dipakai di semua album, hanya URUTANNYA yang
+     digeser (album ke-n mulai dari foto ke-n) supaya tiap album terlihat
+     berbeda. Ganti isi `photos` per album begitu foto asli tiap event
+     tersedia — jumlah foto per album bebas, tidak harus 10. */
+  const ALBUM_PHOTO_COUNT = 10;
+  const ALBUM_CAPTIONS = [
+    'Suasana kajian Kalam Hati bersama jamaah yang hadir sejak pagi.',
+    'Sesi tausiah bersama narasumber, membahas tema menjaga hati di tengah kesibukan.',
+    'Antusiasme Teman Hati mengikuti kajian dari awal hingga akhir.',
+    'Momen kebersamaan jamaah sebelum kajian dimulai.',
+    'Sesi tanya jawab bersama narasumber di lokasi kajian.',
+    'Doa bersama menutup rangkaian acara kajian.',
+    'Ramah tamah bersama jamaah setelah kajian selesai.',
+    'Kebersamaan Teman Hati dari berbagai daerah.',
+    'Penyerahan kenang-kenangan kepada narasumber kajian.',
+    'Foto bersama menutup acara kajian Kalam Hati.'
   ];
+
+  /* Susun daftar foto satu album: mulai dari foto ke-`offset`, lalu berputar
+     kembali ke awal setelah foto terakhir. `count` boleh melebihi jumlah
+     berkas foto yang ada — kelebihannya otomatis mengulang dari awal. */
+  function albumPhotos(offset, count = ALBUM_PHOTO_COUNT) {
+    return Array.from({ length: count }, (_, k) => {
+      const n = ((offset + k) % ALBUM_PHOTO_COUNT) + 1;
+      return { src: `asset/album-${n}.jpg`, caption: ALBUM_CAPTIONS[n - 1] };
+    });
+  }
+
+  const GALLERY_ALBUMS = [
+    { title: 'Event 1 : Kalam Hati',              date: '17 Agustus 2026' },
+    /* sengaja 50 foto — untuk menguji tampilan saat baris pilihan foto
+       pada pop-up harus di-scroll */
+    { title: 'Event 2 : Kajian Akbar',            date: '24 Agustus 2026', count: 50 },
+    { title: 'Event 3 : Silaturahmi Teman Hati',  date: '31 Agustus 2026' },
+    { title: 'Event 4 : Kajian Spesial',          date: '7 September 2026' }
+  ].map((album, i) => ({
+    ...album,
+    /* cover = foto pertama album ini, memakai berkas versi kecil */
+    cover: `asset/album-${(i * 2) % ALBUM_PHOTO_COUNT + 1}-cover.jpg`,
+    photos: albumPhotos(i * 2, album.count)
+  }));
+
+  /* Foto ke-2 album Event 1 sengaja diganti foto landscape (2480x1020,
+     hasil kompresi dari "Gallery 1.jpg") sebagai contoh foto non-persegi:
+     dipakai untuk memeriksa tampilan foto lebar di dalam frame 1:1 —
+     harus tampil UTUH (tidak terpotong), bukan dipangkas. */
+  GALLERY_ALBUMS[0].photos[1] = {
+    src: 'asset/album-landscape.jpg',
+    caption: 'Suasana lokasi kajian dari kejauhan — contoh foto landscape.'
+  };
 
   /* ======================================================================
      2. GENERATOR ILUSTRASI (placeholder foto)
@@ -507,281 +553,194 @@
   /* Avatar pada markup statis (episode utama) */
   $$('[data-av]').forEach(el => { el.innerHTML = avatarSVG(+el.dataset.av); });
 
-  /* --- Galeri (carousel coverflow) ---
-     Foto digandakan 3 salinan supaya slide tetangga kiri-kanan selalu ada,
-     sehingga tidak pernah muncul ruang kosong di ujung. Posisi kerja dijaga
-     di salinan tengah: setiap kali transisi selesai dan posisi keluar dari
-     rentang salinan tengah, posisi dinormalkan tanpa animasi (efek "loop"
-     tak berujung yang mulus). Track-nya dibangun ulang tiap ganti batch
-     lewat galBuildSlides() — lihat blok tab batch di bawah. */
-  const galTrack = $('#galTrack');
-  const GAL_COPIES = 3;
-  let GAL_BATCH = 0;             // index batch aktif pada GALLERY_BATCHES
-  let GALLERY, GAL_LEN, galSlides, galPos;
+  /* --- Galeri: deretan album per event (Figma node 87:21) ---
+     Deretan kartu digeser dengan panah kiri/kanan (sesuai desain) maupun
+     drag manual pakai mouse/jari. Klik kartu → pop-up foto besar. */
+  const albTrack = $('#albTrack');
+  const albViewport = $('#albViewport');
 
-  function galBuildSlides() {
-    GALLERY = GALLERY_BATCHES[GAL_BATCH].photos;
-    GAL_LEN = GALLERY.length;
-    galTrack.innerHTML = '';
-    for (let c = 0; c < GAL_COPIES; c++) {
-      GALLERY.forEach((src, i) => {
-        const slide = document.createElement('div');
-        slide.className = 'gal-slide';
-        /* hanya salinan tengah yang diumumkan ke pembaca layar */
-        if (c !== 1) slide.setAttribute('aria-hidden', 'true');
-        slide.innerHTML = `<img src="${src}" alt="Galeri Kalam Hati ${i + 1}" loading="lazy" draggable="false">`;
-        galTrack.appendChild(slide);
-      });
-    }
-    galSlides = $$('.gal-slide', galTrack);
-    galPos = GAL_LEN;   // slide pertama pada salinan tengah
-    /* Klik slide samping untuk memindahkannya ke tengah (ambang .05 supaya
-       slide yang kebetulan sudah nyaris di tengah — posisi marquee kan
-       pecahan terus — tidak ikut memicu "snap" sekecil apa pun) */
-    galSlides.forEach((s, n) => s.addEventListener('click', () => {
-      if (Math.abs(n - galPos) > 0.05) galMoveTo(n, true);
-    }));
-  }
+  GALLERY_ALBUMS.forEach((album, i) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'album';
+    card.dataset.album = i;
+    card.setAttribute('aria-label', `Buka album ${album.title}`);
+    card.innerHTML = `
+      <span class="alb-thumb">
+        <img src="${album.cover}" alt="" loading="lazy" draggable="false">
+        <span class="alb-overlay"><span class="alb-cta"><i class="ph-fill ph-images"></i> Lihat Semua</span></span>
+      </span>
+      <span class="alb-meta">
+        <span class="alb-title"></span>
+        <span class="alb-date"></span>
+      </span>`;
+    /* textContent — judul & tanggal berasal dari data, jangan diperlakukan
+       sebagai HTML supaya karakter seperti & tidak merusak markup */
+    card.querySelector('.alb-title').textContent = album.title;
+    card.querySelector('.alb-date').textContent = album.date;
+    albTrack.appendChild(card);
+  });
 
-  /* Geseran dihitung dalam piksel dari lebar yang benar-benar terpakai
-     (offsetWidth mengabaikan transform scale pada slide samping), sehingga
-     otomatis ikut benar saat --gal-w berubah di breakpoint. */
-  const GAL_ANIM_MS = 800;   // samakan dengan transition .gal-track di CSS
-  let galNormTimer = null;
+  /* Panah: geser sejauh satu kartu + jaraknya, lalu status enabled/disabled
+     disesuaikan supaya panah menghilang saat sudah mentok di ujung. */
+  function albScrollAmount() {
+    const card = albTrack.querySelector('.album');
+    if (!card) return 300;
+    const gap = parseFloat(getComputedStyle(albTrack).gap) || 28;
+    return card.offsetWidth + gap;
+  }
+  function albSyncArrows() {
+    const max = albViewport.scrollWidth - albViewport.clientWidth;
+    /* toleransi 2px — scrollLeft bisa pecahan di layar ber-DPI tinggi */
+    $('#albPrev').disabled = albViewport.scrollLeft <= 2;
+    $('#albNext').disabled = albViewport.scrollLeft >= max - 2;
+  }
+  $('#albPrev').addEventListener('click', () => {
+    albViewport.scrollBy({ left: -albScrollAmount(), behavior: 'smooth' });
+  });
+  $('#albNext').addEventListener('click', () => {
+    albViewport.scrollBy({ left: albScrollAmount(), behavior: 'smooth' });
+  });
+  albViewport.addEventListener('scroll', albSyncArrows, { passive: true });
+  window.addEventListener('resize', albSyncArrows);
+  albSyncArrows();
 
-  /* Proporsi mengikuti Figma node 20:1516 (frame 1440px):
-       tengah  438.667 × 329      → skala 1
-       ±1      394.8   × 296.1    → skala 0.9
-       ±2      315.84  × 236.88   → skala 0.72
-       jarak antar-slide 26.32px  → 0.06 × lebar slide tengah
-     Slide makin ke tepi makin redup, meniru gradasi abu pada desain.
-     Nilainya diinterpolasi kontinu (bukan lompat per-tingkat) supaya
-     mulus dipakai gerakan marquee yang posisinya pecahan, bukan cuma
-     bilangan bulat. */
-  const GAL_SCALES     = [1, 0.9, 0.72];
-  const GAL_BRIGHTNESS = [1, 0.9, 0.78];
-  const GAL_GAP        = 26.32 / 438.667;
-  function galLerpAt(table, d) {
-    const ad = Math.min(Math.abs(d), table.length - 1);
-    const lo = Math.floor(ad), hi = Math.min(lo + 1, table.length - 1);
-    const f = ad - lo;
-    return table[lo] + (table[hi] - table[lo]) * f;
-  }
-
-  /* Titik pusat visual slide berjarak d dari tengah, dalam satuan lebar
-     slide. Dijumlah bertahap: separuh slide sebelumnya + jarak + separuh
-     slide ini — supaya jarak antar-slide tetap seragam walau ukurannya
-     berbeda-beda (kotak layout-nya sendiri seragam). d boleh pecahan
-     (posisi marquee kontinu), sisa langkah terakhir diinterpolasi linear. */
-  function galVisualCenter(d) {
-    const ad = Math.abs(d), sign = Math.sign(d), full = Math.floor(ad), frac = ad - full;
-    let x = 0;
-    for (let k = 1; k <= full; k++) {
-      x += galLerpAt(GAL_SCALES, k - 1) / 2 + GAL_GAP + galLerpAt(GAL_SCALES, k) / 2;
-    }
-    if (frac > 0) {
-      x += (galLerpAt(GAL_SCALES, full) / 2 + GAL_GAP + galLerpAt(GAL_SCALES, full + 1) / 2) * frac;
-    }
-    return sign * x;
-  }
-
-  function galRender(animate) {
-    const slideW = galSlides[0] ? galSlides[0].offsetWidth : 0;
-    const offset = galTrack.offsetWidth / 2 - (galPos + 0.5) * slideW;
-
-    galTrack.style.transition = animate ? '' : 'none';
-    galSlides.forEach(s => { s.style.transition = animate ? '' : 'none'; });
-    if (animate) void galTrack.offsetWidth;          // paksa reflow hanya utk snap beranimasi
-
-    galTrack.style.transform = `translate3d(${offset}px,0,0)`;
-    galSlides.forEach((s, n) => {
-      const d = n - galPos;
-      /* kotak layout ada di d×slideW; geser ke posisi visual yang diinginkan */
-      const tx = (galVisualCenter(d) - d) * slideW;
-      s.style.transform = `translateX(${tx}px) scale(${galLerpAt(GAL_SCALES, d)})`;
-      s.style.filter = `brightness(${galLerpAt(GAL_BRIGHTNESS, d)})`;
-      s.classList.toggle('is-center', Math.abs(d) < 0.5);
-    });
-    galSyncDots();
-  }
-
-  /* Kembalikan posisi ke salinan tengah tanpa animasi setelah geseran
-     selesai — inilah yang membuat loop terasa tak berujung. */
-  function galNormalize() {
-    if (galPos < GAL_LEN || galPos >= GAL_LEN * 2) {
-      galPos = ((galPos % GAL_LEN) + GAL_LEN) % GAL_LEN + GAL_LEN;
-      galRender(false);
-    }
-  }
-  function galMoveTo(pos, manual) {
-    /* Tampilan butuh 2 slide tetangga di kiri & kanan, jadi posisi harus
-       selalu menyisakan ruang segitu. Kalau tujuan melewatinya (mis. panah
-       diklik cepat berkali-kali sebelum normalisasi sempat jalan), posisi
-       sekarang dirapatkan dulu ke salinan tengah tanpa animasi. */
-    const lo = 2, hi = galSlides.length - 3;
-    if (pos < lo || pos > hi) {
-      const delta = pos - galPos;
-      galPos = ((galPos % GAL_LEN) + GAL_LEN) % GAL_LEN + GAL_LEN;
-      galRender(false);
-      pos = Math.min(hi, Math.max(lo, galPos + delta));
-    }
-    galPos = pos;
-    galRender(true);
-    clearTimeout(galNormTimer);
-    galNormTimer = setTimeout(galNormalize, GAL_ANIM_MS + 60);
-    if (manual) pauseGalMarquee(2500);
-  }
-  function galStep(dir, manual) { galMoveTo(Math.round(galPos) + dir, manual); }
-
-  /* --- Marquee: bergeser sendiri pelan & terus-menerus (bukan lompat
-     per-slide tiap beberapa detik) — dijeda sebentar tiap kali pengguna
-     berinteraksi (panah/klik/geser), lalu jalan lagi sendiri. */
-  const GAL_DRIFT_SPEED = 1 / 9;   // ~9 detik per slide — pelan, bukan marquee "kencang"
-  let galDriftPaused = false, galDriftLastT = null, galDriftResumeTimer = null;
-  function pauseGalMarquee(resumeAfterMs) {
-    galDriftPaused = true;
-    clearTimeout(galDriftResumeTimer);
-    if (resumeAfterMs != null) {
-      galDriftResumeTimer = setTimeout(() => { galDriftPaused = false; galDriftLastT = null; }, resumeAfterMs);
-    }
-  }
-  function galDriftTick(t) {
-    if (galDriftLastT == null) galDriftLastT = t;
-    const dt = Math.min(.1, (t - galDriftLastT) / 1000);
-    galDriftLastT = t;
-    if (!galDriftPaused) {
-      galPos += GAL_DRIFT_SPEED * dt;
-      if (galPos >= GAL_LEN * 2) galPos -= GAL_LEN;   // lompat identik-visual, tanpa kedip
-      galRender(false);
-    }
-    requestAnimationFrame(galDriftTick);
-  }
-
-  /* --- Tab batch/acara: tombolnya dibuat dari GALLERY_BATCHES, dan
-     gliding-pill-nya pakai mekanisme yang sama dengan tab Mari
-     Berinteraksi (lihat blok TABS), cuma di-scope sendiri di sini supaya
-     dua grup tab ini tidak saling ganggu. */
-  const galTabBar = $('#galTabBar');
-  const galTabGlider = $('#galTabGlider');
-  function galMoveGlider(tab) {
-    if (!tab) return;
-    galTabGlider.style.width = tab.offsetWidth + 'px';
-    galTabGlider.style.transform = `translateX(${tab.offsetLeft}px)`;
-  }
-  /* Penempatan awal (load/resize) dibuat instan — sama seperti tab Mari
-     Berinteraksi, supaya animasi width dari 0 tidak bikin teks tab aktif
-     nyaris tak kelihatan sesaat di atas latar tab-bar. */
-  function galMoveGliderInstant(tab) {
-    if (!tab) return;
-    galTabGlider.style.transition = 'none';
-    galMoveGlider(tab);
-    void galTabGlider.offsetWidth;
-    galTabGlider.style.transition = '';
-  }
-  function galBuildTabs() {
-    GALLERY_BATCHES.forEach((batch, i) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tab' + (i === GAL_BATCH ? ' is-active' : '');
-      btn.setAttribute('role', 'tab');
-      btn.setAttribute('aria-selected', i === GAL_BATCH ? 'true' : 'false');
-      btn.textContent = batch.label;
-      btn.addEventListener('click', () => galActivateBatch(i));
-      galTabBar.appendChild(btn);
-    });
-  }
-  function galActivateBatch(i) {
-    if (i === GAL_BATCH) return;
-    GAL_BATCH = i;
-    const galTabs = $$('.tab', galTabBar);
-    galTabs.forEach((t, n) => { t.classList.toggle('is-active', n === i); t.setAttribute('aria-selected', n === i); });
-    galMoveGlider(galTabs[i]);
-    galBuildSlides();
-    galBuildDots();
-    galRender(false);
-  }
-
-  /* --- Pagination kecil: satu titik per foto pada batch aktif. Titik
-     aktifnya disinkronkan tiap galRender() jalan (termasuk saat marquee
-     & drag), jadi selalu mengikuti slide mana yang lagi di tengah. */
-  const galDotsEl = $('#galDots');
-  let galLastDotIdx = -1;
-  function galBuildDots() {
-    galDotsEl.innerHTML = '';
-    GALLERY.forEach((_, i) => {
-      const dot = document.createElement('button');
-      dot.type = 'button';
-      dot.className = 'gal-dot' + (i === 0 ? ' is-active' : '');
-      dot.setAttribute('aria-label', `Ke foto ${i + 1}`);
-      dot.addEventListener('click', () => galMoveTo(GAL_LEN + i, true));
-      galDotsEl.appendChild(dot);
-    });
-    galLastDotIdx = 0;
-  }
-  function galSyncDots() {
-    if (!galDotsEl || !galDotsEl.children.length) return;
-    const idx = ((Math.round(galPos) % GAL_LEN) + GAL_LEN) % GAL_LEN;
-    if (idx === galLastDotIdx) return;
-    galLastDotIdx = idx;
-    $$('.gal-dot', galDotsEl).forEach((d, n) => d.classList.toggle('is-active', n === idx));
-  }
-
-  galBuildTabs();
-  galBuildSlides();
-  galBuildDots();
-  galRender(false);
-  const placeGalGlider = () => galMoveGliderInstant($('.tab.is-active', galTabBar));
-  requestAnimationFrame(placeGalGlider);
-  window.addEventListener('load', placeGalGlider);
-  /* sama seperti tab Mari Berinteraksi — ukur ulang setelah web-font siap */
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeGalGlider);
-  if (!REDUCED) requestAnimationFrame(galDriftTick);   // hormati "reduced motion" — statis saja
-  window.addEventListener('resize', () => { galRender(false); placeGalGlider(); });
-
-  /* Geser manual dengan sentuhan / mouse — berlaku desktop & mobile.
-     Arah gesture baru ditentukan setelah bergerak >8px: kalau dominan
-     horizontal, carousel "mengikuti" jari secara live (setPointerCapture
-     supaya tetap lengket walau jari sempat keluar batas viewport — ini
-     yang bikin swipe di layar sentuh terasa andal, bukan cuma terdeteksi
-     saat lepas jari); kalau dominan vertikal, dilepas sepenuhnya supaya
-     halaman tetap bisa di-scroll seperti biasa. */
-  (function swipe() {
-    const vp = $('.gal-viewport');
-    let active = false, isHorizontal = null, x0 = 0, y0 = 0, startPos = 0;
+  /* Geser manual dengan mouse. Di layar sentuh tidak perlu dicegat sama
+     sekali — overflow-x native sudah menangani swipe jari dengan baik —
+     jadi handler ini khusus pointer mouse. Arah gesture ditentukan setelah
+     bergerak >8px supaya scroll vertikal halaman tidak ikut tercuri. */
+  (function albDrag() {
+    let active = false, isHorizontal = null, x0 = 0, y0 = 0, scroll0 = 0, moved = 0;
     const DIR_THRESHOLD = 8;
 
-    vp.addEventListener('pointerdown', e => {
-      active = true; isHorizontal = null; x0 = e.clientX; y0 = e.clientY; startPos = galPos;
-      pauseGalMarquee();
+    albViewport.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'mouse') return;
+      active = true; isHorizontal = null; moved = 0;
+      x0 = e.clientX; y0 = e.clientY; scroll0 = albViewport.scrollLeft;
     });
-    vp.addEventListener('pointermove', e => {
+    albViewport.addEventListener('pointermove', e => {
       if (!active) return;
       const dx = e.clientX - x0, dy = e.clientY - y0;
       if (isHorizontal === null) {
         if (Math.abs(dx) < DIR_THRESHOLD && Math.abs(dy) < DIR_THRESHOLD) return;
         isHorizontal = Math.abs(dx) > Math.abs(dy);
         if (isHorizontal) {
-          try { vp.setPointerCapture(e.pointerId); } catch (err) {}
-          vp.classList.add('is-dragging');
+          try { albViewport.setPointerCapture(e.pointerId); } catch (err) {}
+          albViewport.classList.add('is-dragging');
         }
       }
-      if (!isHorizontal) return;   // gesture vertikal → biarkan halaman scroll native
+      if (!isHorizontal) return;
       e.preventDefault();
-      const slideW = galSlides[0] ? galSlides[0].offsetWidth : 1;
-      galPos = startPos - dx / slideW;
-      galRender(false);
+      moved = Math.abs(dx);
+      albViewport.scrollLeft = scroll0 - dx;
     });
     function endDrag() {
       if (!active) return;
       active = false;
-      vp.classList.remove('is-dragging');
-      if (isHorizontal) galMoveTo(Math.round(galPos), true);
-      else pauseGalMarquee(2500);
+      albViewport.classList.remove('is-dragging');
       isHorizontal = null;
+      albSyncArrows();
     }
-    vp.addEventListener('pointerup', endDrag);
-    vp.addEventListener('pointercancel', endDrag);
+    albViewport.addEventListener('pointerup', endDrag);
+    albViewport.addEventListener('pointercancel', endDrag);
+    /* Setelah drag sungguhan, klik yang menyusul dibatalkan supaya menggeser
+       deretan tidak ikut membuka pop-up album yang kebetulan ada di bawah
+       kursor saat tombol mouse dilepas. */
+    albViewport.addEventListener('click', e => {
+      if (moved > DIR_THRESHOLD) { e.preventDefault(); e.stopPropagation(); moved = 0; }
+    }, true);
   })();
+
+  /* --- Pop-up album: foto besar + deskripsi + pilihan foto lain --- */
+  const modalAlbum = $('#modalAlbum');
+  let albumIndex = 0, albumPhoto = 0, lastFocusAlbum = null;
+
+  /* Geser baris pilihan foto seperlunya supaya foto yang sedang aktif selalu
+     kelihatan. Penting saat album berisi banyak foto (mis. 50) — tanpa ini
+     penanda aktif bisa jauh di luar layar dan pengguna kehilangan jejak.
+     Hanya scrollLeft baris ini yang disentuh, jadi posisi scroll pop-up &
+     halaman tidak ikut berubah. */
+  function scrollThumbIntoView(el) {
+    const strip = $('#albumThumbs');
+    if (!strip || !el) return;
+    const pad = 8;
+    const sr = strip.getBoundingClientRect(), er = el.getBoundingClientRect();
+    let delta = 0;
+    if (er.left  < sr.left  + pad) delta = er.left  - sr.left  - pad;
+    else if (er.right > sr.right - pad) delta = er.right - sr.right + pad;
+    if (delta) strip.scrollTo({ left: strip.scrollLeft + delta, behavior: 'smooth' });
+  }
+
+  function renderAlbumPhoto() {
+    const album = GALLERY_ALBUMS[albumIndex];
+    if (!album) return;
+    const photo = album.photos[albumPhoto];
+    const img = $('#albumModalImg');
+    img.src = photo.src;
+    img.alt = `${album.title} — foto ${albumPhoto + 1}`;
+    $('#albumModalCaption').textContent = photo.caption || '';
+    $('#albumModalCount').textContent = `Foto ${albumPhoto + 1} dari ${album.photos.length}`;
+    let activeEl = null;
+    $$('.album-thumb', $('#albumThumbs')).forEach((t, n) => {
+      const on = n === albumPhoto;
+      t.classList.toggle('is-active', on);
+      t.setAttribute('aria-current', on ? 'true' : 'false');
+      if (on) activeEl = t;
+    });
+    scrollThumbIntoView(activeEl);
+    /* panah disembunyikan kalau albumnya cuma berisi satu foto */
+    const many = album.photos.length > 1;
+    $$('[data-album-slide]').forEach(b => { b.hidden = !many; });
+  }
+  function goAlbumPhoto(dir) {
+    const album = GALLERY_ALBUMS[albumIndex];
+    if (!album || album.photos.length < 2) return;
+    albumPhoto = (albumPhoto + dir + album.photos.length) % album.photos.length;
+    renderAlbumPhoto();
+  }
+  function openAlbumModal(i) {
+    const album = GALLERY_ALBUMS[i];
+    if (!album) return;
+    albumIndex = i;
+    albumPhoto = 0;
+    $('#albumTitle').textContent = album.title;
+    $('#albumModalDate').textContent = album.date;
+
+    const thumbs = $('#albumThumbs');
+    thumbs.innerHTML = '';
+    album.photos.forEach((p, n) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'album-thumb';
+      b.setAttribute('aria-label', `Lihat foto ${n + 1}`);
+      /* thumbnail tampil 60px — pakai berkas cover yang jauh lebih kecil,
+         bukan foto besar, supaya membuka pop-up tidak memuat 10 foto penuh */
+      b.innerHTML = `<img src="${p.src.replace(/\.jpg$/, "-cover.jpg")}" alt="" loading="lazy" draggable="false">`;
+      b.addEventListener('click', () => { albumPhoto = n; renderAlbumPhoto(); });
+      thumbs.appendChild(b);
+    });
+
+    renderAlbumPhoto();
+    lastFocusAlbum = document.activeElement;
+    modalAlbum.classList.add('is-open');
+    modalAlbum.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAlbumModal() {
+    modalAlbum.classList.remove('is-open');
+    modalAlbum.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    if (lastFocusAlbum) lastFocusAlbum.focus();
+  }
+
+  albTrack.addEventListener('click', e => {
+    const card = e.target.closest('.album');
+    if (card) openAlbumModal(+card.dataset.album);
+  });
+  $$('[data-album-slide]').forEach(b => {
+    b.addEventListener('click', () => goAlbumPhoto(+b.dataset.albumSlide));
+  });
+
 
   /* --- Pilihan narasumber pada form tanya --- */
   const narsumSelect = $('[data-narsum-select]');
@@ -917,7 +876,7 @@
     navPill.style.width = link.offsetWidth + 'px';
     navPill.style.transform = `translateX(${link.offsetLeft}px)`;
   }
-  const SECTION_IDS = ['beranda', 'jadwal-kajian', 'pusat-media', 'mari-berinteraksi'];
+  const SECTION_IDS = ['beranda', 'jadwal-kajian', 'pusat-media', 'galeri', 'mari-berinteraksi'];
   function currentSection() {
     const probe = window.innerHeight * 0.35;
     let cur = SECTION_IDS[0];
@@ -1085,10 +1044,12 @@
         $$('[data-counter-for]', form).forEach(sp => sp.textContent = '0');
         $$('.field', form).forEach(f => f.classList.remove('has-error'));
 
+        /* Pemberitahuan berhasil memakai modal ber-ikon centang (bukan toast).
+           Khusus Daftar Kajian, modal formulirnya ditutup lebih dulu supaya
+           tidak bertumpuk dengan modal pemberitahuan. */
         const kind = form.dataset.form;
-        if (kind === 'teman')         toast('Jazakallahu khairan! Terima kasih atas usulanmu, akan kami pertimbangkan.');
-        else if (kind === 'curahan')  toast('Curahan hatimu sudah kami terima. Pertanyaanmu akan dijawab pada kajian selanjutnya.');
-        else { toast('Pendaftaran berhasil! Detail dikirim via WhatsApp.'); closeModal(); }
+        if (kind !== 'teman' && kind !== 'curahan') closeModal();
+        openSuksesModal(kind);
       }, 1100);
     });
   });
@@ -1228,6 +1189,43 @@
     if (lastFocusPlatform) lastFocusPlatform.focus();
   }
 
+  /* --- Modal pemberitahuan berhasil (pengganti toast sukses) --- */
+  const modalSukses = $('#modalSukses');
+  let lastFocusSukses = null;
+  /* Isi pesan per form — dipakai setelah pengiriman berhasil. */
+  const SUKSES_PESAN = {
+    daftar: {
+      judul: 'Pendaftaran Berhasil',
+      pesan: 'Terima kasih atas partisipasinya, detail kegiatan dan informasi selanjutnya akan di informasikan melalui WhatsApp kamu'
+    },
+    curahan: {
+      judul: 'Berhasil Kirim',
+      pesan: 'Curahan hatimu sudah kami terima. Pertanyaanmu akan dijawab pada kajian selanjutnya.'
+    },
+    teman: {
+      judul: 'Berhasil Kirim',
+      pesan: 'Jazakallahu khairan! Terima kasih atas usulanmu, akan kami pertimbangkan.'
+    }
+  };
+  function openSuksesModal(kind) {
+    const isi = SUKSES_PESAN[kind] || SUKSES_PESAN.curahan;
+    $('#suksesTitle').textContent = isi.judul;
+    $('#suksesMsg').textContent = isi.pesan;
+    lastFocusSukses = document.activeElement;
+    modalSukses.classList.add('is-open');
+    modalSukses.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    /* fokus pindah ke tombol "Oke" supaya Enter/Esc langsung menutupnya */
+    const ok = modalSukses.querySelector('.btn-fig-primary');
+    if (ok) requestAnimationFrame(() => ok.focus());
+  }
+  function closeSuksesModal() {
+    modalSukses.classList.remove('is-open');
+    modalSukses.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    if (lastFocusSukses) lastFocusSukses.focus();
+  }
+
   document.addEventListener('click', e => {
     /* Dari bottom sheet peta, "Daftar" menutup sheet lalu membuka sheet form */
     if (e.target.closest('[data-open-daftar]')) {
@@ -1248,6 +1246,8 @@
       const host = closeBtn.closest('.modal');
       if (host === modalDaily) closeDailyModal();
       else if (host === modalPlatform) closePlatformModal();
+      else if (host === modalAlbum) closeAlbumModal();
+      else if (host === modalSukses) closeSuksesModal();
       else closeModal();
     }
   });
@@ -1256,6 +1256,14 @@
       if (modal.classList.contains('is-open')) closeModal();
       if (modalDaily.classList.contains('is-open')) closeDailyModal();
       if (modalPlatform.classList.contains('is-open')) closePlatformModal();
+      if (modalAlbum.classList.contains('is-open')) closeAlbumModal();
+      if (modalSukses.classList.contains('is-open')) closeSuksesModal();
+    }
+    /* panah kiri/kanan: pindah foto pada modal yang sedang terbuka */
+    if (modalAlbum.classList.contains('is-open')) {
+      if (e.key === 'ArrowLeft') goAlbumPhoto(-1);
+      if (e.key === 'ArrowRight') goAlbumPhoto(1);
+      return;
     }
     if (!modalDaily.classList.contains('is-open')) return;
     if (e.key === 'ArrowLeft') goDailySlide(-1);
