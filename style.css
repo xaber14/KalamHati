@@ -665,8 +665,12 @@ ul{list-style:none}
   position:relative;display:flex;flex-direction:column;
   /* Lebar kartu TETAP 800px (menyusut hanya kalau layarnya lebih sempit).
      Lebar DIHITUNG, bukan width:auto — dengan width:auto lebar kartu ikut
-     melar mengikuti jumlah thumbnail (album 50 foto jadi sangat panjang). */
-  width:min(94vw, 800px);max-height:90vh;
+     melar mengikuti jumlah thumbnail (album 50 foto jadi sangat panjang).
+     Pakai 100%, BUKAN 94vw: .modal punya padding 20px, sedangkan vw
+     menghitung lebar layar penuh — 94vw jadi lebih lebar dari ruang yang
+     tersedia di layar sempit, sehingga kartu meleset ke kanan dan jarak
+     kiri-kanannya tidak sama. 100% sudah relatif ke ruang setelah padding. */
+  width:min(100%, 800px);max-height:90vh;
   border-radius:var(--r-xl);background:#fff;overflow:hidden;
   box-shadow:0 50px 110px -40px rgba(0,0,0,.75);
   transform:translateY(26px) scale(.95);opacity:0;
@@ -939,7 +943,9 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:13px;color:var(-
 
 .daily-modal-card{
   position:relative;display:flex;
-  width:min(94vw,935px);max-height:90vh;
+  /* 100%, bukan 94vw — .modal punya padding 20px, jadi 94vw melebihi ruang
+     yang tersedia di layar sempit dan kartu meleset ke kanan */
+  width:min(100%,935px);max-height:90vh;
   border-radius:var(--r-xl);background:#fff;overflow:hidden;
   box-shadow:0 50px 110px -40px rgba(0,0,0,.75);
   transform:translateY(26px) scale(.95);opacity:0;
@@ -954,7 +960,9 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:13px;color:var(-
    kiri-kanan, tapi TIDAK PERNAH terpotong. */
 .daily-modal-media{
   position:relative;flex:0 0 auto;
-  width:calc(min(94vw,935px) - 360px);aspect-ratio:4/5;max-height:90vh;
+  /* selebar kartu dikurangi sidebar 360px — ikut lebar kartu apa pun
+     hasil min() di atas, jadi tidak perlu mengulang rumusnya di sini */
+  width:calc(100% - 360px);aspect-ratio:4/5;max-height:90vh;
   background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
 .daily-modal-media img,.daily-modal-media video{
@@ -999,7 +1007,7 @@ label.check{display:flex;align-items:center;gap:.6rem;font-size:13px;color:var(-
 .daily-modal-link{width:100%;justify-content:center;padding:.75rem 1rem;font-size:14px}
 
 @media (max-width:760px){
-  .daily-modal-card{flex-direction:column;width:min(94vw,480px);max-height:88vh}
+  .daily-modal-card{flex-direction:column;width:min(100%,480px);max-height:88vh}
   .daily-modal-media{width:100%;aspect-ratio:auto;height:min(50vh,400px)}
   .daily-modal-side{flex:1 1 auto;width:100%;border-left:0;min-height:0}
 }
