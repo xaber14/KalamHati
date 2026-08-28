@@ -161,10 +161,16 @@
     }
   ];
 
-  const GALLERY = [
-    'asset/Gallery 1.jpg',
-    'asset/Gallery 2.jpg',
-    'asset/Gallery 3.jpg'
+  /* Galeri dibagi per batch/acara — tiap tab tampilkan fotonya sendiri.
+     Baru ada 3 file foto asli di asset/, jadi untuk sementara tiap batch
+     memakai 3 foto yang sama tapi urutannya dirotasi (bukan diduplikasi
+     identik) supaya waktu tab diganti kelihatan bedanya. GANTI array
+     `photos` di bawah dengan foto asli tiap acara begitu sudah tersedia —
+     boleh beda jumlah antar-batch, tidak harus selalu 3. */
+  const GALLERY_BATCHES = [
+    { label: 'Batch 1', photos: ['asset/Gallery 1.jpg', 'asset/Gallery 2.jpg', 'asset/Gallery 3.jpg'] },
+    { label: 'Batch 2', photos: ['asset/Gallery 2.jpg', 'asset/Gallery 3.jpg', 'asset/Gallery 1.jpg'] },
+    { label: 'Batch 3', photos: ['asset/Gallery 3.jpg', 'asset/Gallery 1.jpg', 'asset/Gallery 2.jpg'] }
   ];
 
   /* ======================================================================
@@ -506,24 +512,36 @@
      sehingga tidak pernah muncul ruang kosong di ujung. Posisi kerja dijaga
      di salinan tengah: setiap kali transisi selesai dan posisi keluar dari
      rentang salinan tengah, posisi dinormalkan tanpa animasi (efek "loop"
-     tak berujung yang mulus). */
+     tak berujung yang mulus). Track-nya dibangun ulang tiap ganti batch
+     lewat galBuildSlides() — lihat blok tab batch di bawah. */
   const galTrack = $('#galTrack');
-  const GAL_LEN = GALLERY.length;
   const GAL_COPIES = 3;
+  let GAL_BATCH = 0;             // index batch aktif pada GALLERY_BATCHES
+  let GALLERY, GAL_LEN, galSlides, galPos;
 
-  for (let c = 0; c < GAL_COPIES; c++) {
-    GALLERY.forEach((src, i) => {
-      const slide = document.createElement('div');
-      slide.className = 'gal-slide';
-      /* hanya salinan tengah yang diumumkan ke pembaca layar */
-      if (c !== 1) slide.setAttribute('aria-hidden', 'true');
-      slide.innerHTML = `<img src="${src}" alt="Galeri Kalam Hati ${i + 1}" loading="lazy">`;
-      galTrack.appendChild(slide);
-    });
+  function galBuildSlides() {
+    GALLERY = GALLERY_BATCHES[GAL_BATCH].photos;
+    GAL_LEN = GALLERY.length;
+    galTrack.innerHTML = '';
+    for (let c = 0; c < GAL_COPIES; c++) {
+      GALLERY.forEach((src, i) => {
+        const slide = document.createElement('div');
+        slide.className = 'gal-slide';
+        /* hanya salinan tengah yang diumumkan ke pembaca layar */
+        if (c !== 1) slide.setAttribute('aria-hidden', 'true');
+        slide.innerHTML = `<img src="${src}" alt="Galeri Kalam Hati ${i + 1}" loading="lazy" draggable="false">`;
+        galTrack.appendChild(slide);
+      });
+    }
+    galSlides = $$('.gal-slide', galTrack);
+    galPos = GAL_LEN;   // slide pertama pada salinan tengah
+    /* Klik slide samping untuk memindahkannya ke tengah (ambang .05 supaya
+       slide yang kebetulan sudah nyaris di tengah — posisi marquee kan
+       pecahan terus — tidak ikut memicu "snap" sekecil apa pun) */
+    galSlides.forEach((s, n) => s.addEventListener('click', () => {
+      if (Math.abs(n - galPos) > 0.05) galMoveTo(n, true);
+    }));
   }
-
-  const galSlides = $$('.gal-slide', galTrack);
-  let galPos = GAL_LEN;   // slide pertama pada salinan tengah
 
   /* Geseran dihitung dalam piksel dari lebar yang benar-benar terpakai
      (offsetWidth mengabaikan transform scale pada slide samping), sehingga
@@ -584,6 +602,7 @@
       s.style.filter = `brightness(${galLerpAt(GAL_BRIGHTNESS, d)})`;
       s.classList.toggle('is-center', Math.abs(d) < 0.5);
     });
+    galSyncDots();
   }
 
   /* Kembalikan posisi ke salinan tengah tanpa animasi setelah geseran
@@ -614,13 +633,6 @@
   }
   function galStep(dir, manual) { galMoveTo(Math.round(galPos) + dir, manual); }
 
-  /* Klik slide samping untuk memindahkannya ke tengah (ambang .05 supaya
-     slide yang kebetulan sudah nyaris di tengah — posisi marquee kan
-     pecahan terus — tidak ikut memicu "snap" sekecil apa pun) */
-  galSlides.forEach((s, n) => s.addEventListener('click', () => {
-    if (Math.abs(n - galPos) > 0.05) galMoveTo(n, true);
-  }));
-
   /* --- Marquee: bergeser sendiri pelan & terus-menerus (bukan lompat
      per-slide tiap beberapa detik) — dijeda sebentar tiap kali pengguna
      berinteraksi (panah/klik/geser), lalu jalan lagi sendiri. */
@@ -645,9 +657,86 @@
     requestAnimationFrame(galDriftTick);
   }
 
+  /* --- Tab batch/acara: tombolnya dibuat dari GALLERY_BATCHES, dan
+     gliding-pill-nya pakai mekanisme yang sama dengan tab Mari
+     Berinteraksi (lihat blok TABS), cuma di-scope sendiri di sini supaya
+     dua grup tab ini tidak saling ganggu. */
+  const galTabBar = $('#galTabBar');
+  const galTabGlider = $('#galTabGlider');
+  function galMoveGlider(tab) {
+    if (!tab) return;
+    galTabGlider.style.width = tab.offsetWidth + 'px';
+    galTabGlider.style.transform = `translateX(${tab.offsetLeft}px)`;
+  }
+  /* Penempatan awal (load/resize) dibuat instan — sama seperti tab Mari
+     Berinteraksi, supaya animasi width dari 0 tidak bikin teks tab aktif
+     nyaris tak kelihatan sesaat di atas latar tab-bar. */
+  function galMoveGliderInstant(tab) {
+    if (!tab) return;
+    galTabGlider.style.transition = 'none';
+    galMoveGlider(tab);
+    void galTabGlider.offsetWidth;
+    galTabGlider.style.transition = '';
+  }
+  function galBuildTabs() {
+    GALLERY_BATCHES.forEach((batch, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tab' + (i === GAL_BATCH ? ' is-active' : '');
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', i === GAL_BATCH ? 'true' : 'false');
+      btn.textContent = batch.label;
+      btn.addEventListener('click', () => galActivateBatch(i));
+      galTabBar.appendChild(btn);
+    });
+  }
+  function galActivateBatch(i) {
+    if (i === GAL_BATCH) return;
+    GAL_BATCH = i;
+    const galTabs = $$('.tab', galTabBar);
+    galTabs.forEach((t, n) => { t.classList.toggle('is-active', n === i); t.setAttribute('aria-selected', n === i); });
+    galMoveGlider(galTabs[i]);
+    galBuildSlides();
+    galBuildDots();
+    galRender(false);
+  }
+
+  /* --- Pagination kecil: satu titik per foto pada batch aktif. Titik
+     aktifnya disinkronkan tiap galRender() jalan (termasuk saat marquee
+     & drag), jadi selalu mengikuti slide mana yang lagi di tengah. */
+  const galDotsEl = $('#galDots');
+  let galLastDotIdx = -1;
+  function galBuildDots() {
+    galDotsEl.innerHTML = '';
+    GALLERY.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'gal-dot' + (i === 0 ? ' is-active' : '');
+      dot.setAttribute('aria-label', `Ke foto ${i + 1}`);
+      dot.addEventListener('click', () => galMoveTo(GAL_LEN + i, true));
+      galDotsEl.appendChild(dot);
+    });
+    galLastDotIdx = 0;
+  }
+  function galSyncDots() {
+    if (!galDotsEl || !galDotsEl.children.length) return;
+    const idx = ((Math.round(galPos) % GAL_LEN) + GAL_LEN) % GAL_LEN;
+    if (idx === galLastDotIdx) return;
+    galLastDotIdx = idx;
+    $$('.gal-dot', galDotsEl).forEach((d, n) => d.classList.toggle('is-active', n === idx));
+  }
+
+  galBuildTabs();
+  galBuildSlides();
+  galBuildDots();
   galRender(false);
+  const placeGalGlider = () => galMoveGliderInstant($('.tab.is-active', galTabBar));
+  requestAnimationFrame(placeGalGlider);
+  window.addEventListener('load', placeGalGlider);
+  /* sama seperti tab Mari Berinteraksi — ukur ulang setelah web-font siap */
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeGalGlider);
   if (!REDUCED) requestAnimationFrame(galDriftTick);   // hormati "reduced motion" — statis saja
-  window.addEventListener('resize', () => galRender(false));
+  window.addEventListener('resize', () => { galRender(false); placeGalGlider(); });
 
   /* Geser manual dengan sentuhan / mouse — berlaku desktop & mobile.
      Arah gesture baru ditentukan setelah bergerak >8px: kalau dominan
@@ -671,7 +760,10 @@
       if (isHorizontal === null) {
         if (Math.abs(dx) < DIR_THRESHOLD && Math.abs(dy) < DIR_THRESHOLD) return;
         isHorizontal = Math.abs(dx) > Math.abs(dy);
-        if (isHorizontal) { try { vp.setPointerCapture(e.pointerId); } catch (err) {} }
+        if (isHorizontal) {
+          try { vp.setPointerCapture(e.pointerId); } catch (err) {}
+          vp.classList.add('is-dragging');
+        }
       }
       if (!isHorizontal) return;   // gesture vertikal → biarkan halaman scroll native
       e.preventDefault();
@@ -682,6 +774,7 @@
     function endDrag() {
       if (!active) return;
       active = false;
+      vp.classList.remove('is-dragging');
       if (isHorizontal) galMoveTo(Math.round(galPos), true);
       else pauseGalMarquee(2500);
       isHorizontal = null;
@@ -874,22 +967,47 @@
   /* ======================================================================
      6. TABS
      ====================================================================== */
-  const tabs = $$('.tab'), glider = $('#tabGlider');
+  const tabs = $$('.tab', $('#interaksiTabBar')), glider = $('#tabGlider');
   function moveGlider(tab) {
     glider.style.width = tab.offsetWidth + 'px';
     /* offsetLeft sudah relatif terhadap padding-box .tab-bar, jadi dipakai
        apa adanya — mengurangi nilai padding membuat pill menempel ke tepi. */
     glider.style.transform = `translateX(${tab.offsetLeft}px)`;
   }
+  /* Dipakai khusus utk penempatan awal (load/resize) — .tab-glider punya
+     CSS transition pada width, dan nilai awalnya width:0. Kalau posisi
+     awal ini lewat moveGlider() biasa, transisi itu ikut kepicu dari 0 →
+     lebar asli selama .6 detik: selama itu teks tab aktif (plum gelap)
+     yang belum tertutup pill nyaris tak kelihatan di atas latar gelap,
+     kelihatan seperti "kepotong". Set instan dulu, baru transisi
+     dikembalikan supaya ganti tab lewat klik tetap animasi mulus. */
+  function moveGliderInstant(tab) {
+    if (!tab) return;
+    glider.style.transition = 'none';
+    moveGlider(tab);
+    void glider.offsetWidth;   // paksa reflow sebelum transisi dikembalikan
+    glider.style.transition = '';
+  }
   function activateTab(tab) {
     tabs.forEach(t => { t.classList.toggle('is-active', t === tab); t.setAttribute('aria-selected', t === tab); });
     $$('.tab-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === tab.dataset.tab));
     moveGlider(tab);
   }
+  /* Query WAJIB di-scope ke #interaksiTabBar — '.tab.is-active' global akan
+     kena tab batch Galeri lebih dulu (section Galeri ada di atas section
+     ini), sehingga pill emas mengambil lebar tab Galeri yang lebih sempit
+     dan teks tab di sini jadi kelihatan terpotong. */
+  const interaksiBar = $('#interaksiTabBar');
   tabs.forEach(t => t.addEventListener('click', () => activateTab(t)));
-  requestAnimationFrame(() => moveGlider($('.tab.is-active')));
-  window.addEventListener('load', () => moveGlider($('.tab.is-active')));
-  window.addEventListener('resize', () => moveGlider($('.tab.is-active')));
+  const placeInteraksiGlider = () => moveGliderInstant($('.tab.is-active', interaksiBar));
+  requestAnimationFrame(placeInteraksiGlider);
+  window.addEventListener('load', placeInteraksiGlider);
+  window.addEventListener('resize', placeInteraksiGlider);
+  /* WAJIB: lebar tab bergantung lebar teksnya, dan teks masih memakai font
+     cadangan sampai web-font selesai dimuat. Web-font kadang baru siap
+     SETELAH event 'load', jadi tanpa ini pill emas terkunci pada ukuran
+     font cadangan yang lebih sempit dan teks tab kelihatan terpotong. */
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeInteraksiGlider);
 
   /* ======================================================================
      7. FORM

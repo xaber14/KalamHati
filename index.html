@@ -182,6 +182,12 @@
         <div class="panel-map">
           <iframe id="kajianMap" title="Peta lokasi kajian" loading="lazy"
                   referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+          <!-- iframe peta menangkap semua event scroll/wheel sendiri (beda
+               dokumen), jadi scroll halaman terasa "tertahan" begitu kursor
+               masuk area ini — lapisan transparan ini menahan wheel supaya
+               tetap diteruskan ke scroll halaman. Interaksi peta sungguhan
+               tetap lewat tombol "Cek Maps" di bawah. -->
+          <div class="panel-map-shield" aria-hidden="true"></div>
         </div>
         <div class="panel-body">
           <p class="panel-eyebrow">LOKASI KAJIAN</p>
@@ -285,12 +291,20 @@
       <p class="sec-desc">Saksikan terus kegiatan kami selama acara kajian</p>
     </header>
 
+    <!-- Tab batch/acara — tombolnya diisi script.js dari GALLERY_BATCHES -->
+    <div class="tab-bar tab-bar--light gal-tab-bar reveal" data-reveal-delay="40" role="tablist" id="galTabBar">
+      <span class="tab-glider" id="galTabGlider" aria-hidden="true"></span>
+    </div>
+
     <!-- Tanpa tombol panah — navigasi lewat geser/drag langsung (lihat swipe() di script.js) -->
     <div class="gallery reveal" data-reveal-delay="80">
       <div class="gal-viewport">
         <div class="gal-track" id="galTrack"><!-- diisi script.js --></div>
       </div>
     </div>
+
+    <!-- Pagination kecil — satu titik per foto pada batch aktif, diisi script.js -->
+    <div class="gal-dots" id="galDots" aria-hidden="true"></div>
   </div>
 </section>
 
@@ -306,7 +320,7 @@
     </header>
 
     <div class="tabs reveal" data-reveal-delay="80">
-      <div class="tab-bar" role="tablist">
+      <div class="tab-bar" role="tablist" id="interaksiTabBar">
         <button class="tab is-active" role="tab" data-tab="curahan" aria-selected="true">
           <i class="ph-fill ph-chat-teardrop-text"></i> Curahan Hati
         </button>

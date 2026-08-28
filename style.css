@@ -417,8 +417,10 @@ ul{list-style:none}
 .kajian-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
   overflow:hidden;display:flex;flex-direction:column;gap:16px;padding-bottom:16px;
   position:sticky;top:calc(var(--topbar-h) + 20px)}
-.panel-map{height:400px;background:#f1f1f1;overflow:hidden}
+.panel-map{position:relative;height:400px;background:#f1f1f1;overflow:hidden}
 .panel-map iframe{width:100%;height:100%;border:0;display:block}
+/* lapisan transparan penahan wheel — lihat komentar di HTML */
+.panel-map-shield{position:absolute;inset:0;z-index:2;cursor:default}
 .panel-body{padding-inline:24px;display:flex;flex-direction:column;gap:15px}
 .panel-eyebrow{font-size:14px;font-weight:500;color:var(--ink);letter-spacing:.02em}
 .panel-body h3{font-size:22px;font-weight:700;color:var(--ink);line-height:1.22}
@@ -579,12 +581,29 @@ ul{list-style:none}
 /* Jarak header section ke foto pertama dipersempit khusus di sini (bukan
    lewat .sec-head yang dipakai bersama section lain) supaya tidak
    mengubah spacing section lain yang sudah pas. */
-#galeri .sec-head{margin-bottom:16px}
+#galeri .sec-head{margin-bottom:30px}
 .gallery{position:relative;--gal-w:30.5%}
+
+/* Tab batch/acara — pakai struktur .tab-bar/.tab/.tab-glider yang sama
+   dengan Mari Berinteraksi, tapi section ini berlatar putih (bukan plum
+   gelap), jadi warnanya dibalik lewat modifier ini. */
+.gal-tab-bar{margin:0 auto clamp(20px,2vw,28px)}
+/* selector dobel (.tab-bar--light.tab-bar) sengaja dipakai supaya
+   spesifisitasnya menang dibanding rule dasar .tab-bar di bawah, apa pun
+   urutannya di file ini — background/border putih di sini gampang keok
+   diam-diam kalau cuma andalkan urutan source. */
+.tab-bar--light.tab-bar{background:var(--surface-2);border-color:rgba(98,32,70,.1)}
+.tab-bar--light .tab{color:var(--ink-3)}
+.tab-bar--light .tab.is-active{color:#fff}
+.tab-bar--light .tab-glider{background:var(--plum);background-image:none;
+  box-shadow:0 10px 22px -12px rgba(98,32,70,.55)}
+
 .gal-viewport{
   position:relative;overflow:hidden;padding-block:14px;
   width:100vw;margin-left:calc(50% - 50vw);   /* keluar dari .shell → full-bleed */
+  cursor:grab;
 }
+.gal-viewport.is-dragging{cursor:grabbing}
 .gal-track{display:flex;width:100%;align-items:center;transition:transform .8s var(--spring)}
 .gal-slide{
   flex:0 0 var(--gal-w);aspect-ratio:4/3;position:relative;
@@ -597,6 +616,15 @@ ul{list-style:none}
    memang dipangkas — ini pilihan yang disepakati agar tidak ada ruang
    kosong di dalam kotak. */
 .gal-slide svg,.gal-slide img{width:100%;height:100%;display:block;object-fit:cover}
+/* <img> secara default draggable di browser — ganggu drag manual kartu
+   (lihat catatan serupa di kartu Instagram/TikTok/Berita) */
+.gal-slide img{-webkit-user-drag:none;user-select:none}
+
+/* Pagination kecil di bawah galeri — satu titik per foto pada batch aktif */
+.gal-dots{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px}
+.gal-dot{width:6px;height:6px;padding:0;border-radius:50%;background:var(--line-dim);
+  transition:width .35s var(--smooth),background .35s var(--smooth)}
+.gal-dot.is-active{width:20px;border-radius:var(--r-pill);background:var(--plum)}
 
 /* --------------------------- 12. Mari Berinteraksi ------------------------ */
 .section-interaksi{background:var(--plum-deep);overflow:hidden;padding-top:clamp(72px,7vw,96px)}
