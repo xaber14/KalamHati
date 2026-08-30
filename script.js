@@ -196,18 +196,23 @@
     });
   }
 
+  /* Enam album = dua halaman (3 album per halaman) — cukup untuk menunjukkan
+     panah/geser berpindah tiga-tiga sekaligus. */
   const GALLERY_ALBUMS = [
     { title: 'Event 1 : Kalam Hati',              date: '17 Agustus 2026' },
     /* sengaja 50 foto — untuk menguji tampilan saat baris pilihan foto
        pada pop-up harus di-scroll */
     { title: 'Event 2 : Kajian Akbar',            date: '24 Agustus 2026', count: 50 },
     { title: 'Event 3 : Silaturahmi Teman Hati',  date: '31 Agustus 2026' },
-    { title: 'Event 4 : Kajian Spesial',          date: '7 September 2026' }
+    { title: 'Event 4 : Kajian Spesial',          date: '7 September 2026' },
+    { title: 'Event 5 : Tabligh Akbar',           date: '14 September 2026' },
+    { title: 'Event 6 : Kajian Subuh',            date: '21 September 2026' }
   ].map((album, i) => ({
     ...album,
-    /* cover = foto pertama album ini, memakai berkas versi kecil */
-    cover: `asset/album-${(i * 2) % ALBUM_PHOTO_COUNT + 1}-cover.jpg`,
-    photos: albumPhotos(i * 2, album.count)
+    /* offset foto digeser 1 per album (bukan 2) supaya sampai album ke-10
+       pun cover & urutan fotonya tidak ada yang kembar */
+    cover: `asset/album-${i % ALBUM_PHOTO_COUNT + 1}-cover.jpg`,
+    photos: albumPhotos(i, album.count)
   }));
 
   /* Foto ke-2 album Event 1 sengaja diganti foto landscape (2480x1020,
@@ -581,13 +586,12 @@
     albTrack.appendChild(card);
   });
 
-  /* Panah: geser sejauh satu kartu + jaraknya, lalu status enabled/disabled
-     disesuaikan supaya panah menghilang saat sudah mentok di ujung. */
+  /* Panah menggeser SATU HALAMAN penuh (3 album sekaligus), bukan satu kartu.
+     Lebar 3 kartu + 2 jarak = persis lebar area terlihat, jadi jarak geser
+     satu halaman = lebar area + 1 jarak (jarak pemisah antar-halaman). */
   function albScrollAmount() {
-    const card = albTrack.querySelector('.album');
-    if (!card) return 300;
     const gap = parseFloat(getComputedStyle(albTrack).gap) || 28;
-    return card.offsetWidth + gap;
+    return albViewport.clientWidth + gap;
   }
   function albSyncArrows() {
     const max = albViewport.scrollWidth - albViewport.clientWidth;
@@ -980,8 +984,8 @@
     nama:       { test: v => v.trim().length >= 3, msg: 'Mohon isi nama lengkap (minimal 3 huruf).' },
     hp:         { test: v => /^(\+62|62|0)8[1-9][0-9]{6,11}$/.test(v.replace(/[\s-]/g, '')), msg: 'Nomor handphone tidak valid. Contoh: 081234567890' },
     alamat:     { test: v => v.trim().length >= 6, msg: 'Mohon isi alamat lebih lengkap.' },
-    tema:       { test: v => v.trim().length >= 4, msg: 'Tuliskan usulan tema kajianmu.' },
-    pertanyaan: { test: v => v.trim().length >= 10, msg: 'Tuliskan pertanyaanmu minimal 10 karakter.' }
+    tema:       { test: v => v.trim().length >= 4, msg: 'Tuliskan usulan tema kajian Anda.' },
+    pertanyaan: { test: v => v.trim().length >= 10, msg: 'Tuliskan pertanyaan Anda minimal 10 karakter.' }
   };
 
   function validateField(input) {
@@ -1196,15 +1200,15 @@
   const SUKSES_PESAN = {
     daftar: {
       judul: 'Pendaftaran Berhasil',
-      pesan: 'Terima kasih atas partisipasinya, detail kegiatan dan informasi selanjutnya akan di informasikan melalui WhatsApp kamu'
+      pesan: 'Terima kasih atas partisipasinya, detail kegiatan dan informasi selanjutnya akan di informasikan melalui WhatsApp Anda'
     },
     curahan: {
       judul: 'Berhasil Kirim',
-      pesan: 'Curahan hatimu sudah kami terima. Pertanyaanmu akan dijawab pada kajian selanjutnya.'
+      pesan: 'Curahan hati Anda sudah kami terima. Pertanyaan Anda akan dijawab pada kajian selanjutnya.'
     },
     teman: {
       judul: 'Berhasil Kirim',
-      pesan: 'Jazakallahu khairan! Terima kasih atas usulanmu, akan kami pertimbangkan.'
+      pesan: 'Jazakallahu khairan! Terima kasih atas usulan Anda, akan kami pertimbangkan.'
     }
   };
   function openSuksesModal(kind) {

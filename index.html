@@ -35,6 +35,11 @@
 <!-- ============ 0. NAVBAR (tidak diubah) ============ -->
 <header class="navbar" id="navbar">
   <nav class="nav-inner" aria-label="Menu utama">
+    <!-- Logo hanya tampil di mobile — di desktop navbar-nya berisi menu
+         penuh di tengah, tidak ada ruang untuk logo. -->
+    <a class="nav-logo" href="#beranda" aria-label="Kalam Hati — kembali ke Beranda">
+      <img src="asset/LOGO KALAM HATI.png" alt="Kalam Hati" />
+    </a>
     <ul class="nav-menu" id="navMenu">
       <li><a href="#beranda" class="nav-link is-active" data-target="beranda">Beranda</a></li>
       <li><a href="#jadwal-kajian" class="nav-link" data-target="jadwal-kajian">Jadwal Kajian</a></li>
@@ -44,30 +49,30 @@
       <span class="nav-pill" id="navPill" aria-hidden="true"></span>
     </ul>
 
-    <!-- Waktu sholat berjalan & berikutnya (zona WIB / Jakarta). Bisa diklik
-         untuk membuka jadwal sholat lengkap hari ini. -->
-    <aside class="prayer-strip" id="prayerStrip" aria-label="Waktu sholat Jakarta"
+    <!-- Waktu sholat berjalan & berikutnya (zona WIB / Jakarta). SELURUH
+         bingkai ini yang bisa diklik untuk membuka jadwal lengkap, bukan
+         cuma ikon chevron-nya. -->
+    <aside class="prayer-strip" id="prayerStrip" aria-label="Jadwal sholat DKI Jakarta"
            role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
       <span class="ps-icon"><i class="ph-fill ph-mosque"></i></span>
       <div class="ps-body">
+        <p class="ps-label">
+          <span class="ps-label-text">Jadwal sholat DKI Jakarta</span>
+          <i class="ph-bold ph-caret-down ps-caret" aria-hidden="true"></i>
+        </p>
         <p class="ps-next">
-          Berikutnya <b id="psNext">—</b>
-          <span class="ps-dot"></span><span id="psNextTime">—</span>
-          <!-- Figma mobile (node 67:975) tidak menampilkan hitung mundur —
-               disembunyikan khusus mobile lewat .ps-countdown-wrap -->
-          <span class="ps-countdown-wrap">
-            <span class="ps-dot"></span><span id="psCountdown">—</span>
-          </span>
+          <span class="ps-next-lead">Berikutnya</span> <b id="psNext">—</b> <b id="psNextTime">—</b>
         </p>
       </div>
-      <span class="ps-zone">WIB<small>Jakarta</small></span>
+      <!-- Figma mobile (node 67:975) tidak menampilkan hitung mundur —
+           disembunyikan khusus mobile lewat .ps-countdown-wrap -->
+      <span class="ps-countdown-wrap"><span id="psCountdown">—</span></span>
 
       <div class="prayer-pop" id="prayerPop" aria-hidden="true">
         <p class="prayer-pop-title">Jadwal Sholat Hari Ini</p>
         <ul class="prayer-pop-list" id="prayerPopList"><!-- diisi script.js --></ul>
       </div>
     </aside>
-
     <!-- Hanya tampil di mobile (Figma node 67:1003) -->
     <button class="nav-toggle" id="navToggle" type="button"
             aria-label="Buka menu" aria-expanded="false" aria-controls="navMenu">
@@ -335,13 +340,13 @@
         <div class="tab-panel is-active" data-panel="curahan" role="tabpanel">
           <div class="panel-intro">
             <h3>Curahan Hati</h3>
-            <p>Sampaikan pertanyaan atau curahan hatimu — insyaallah kami baca dan tanggapi dengan hangat.</p>
+            <p>Sampaikan pertanyaan atau curahan hati Anda — insyaallah kami baca dan tanggapi dengan hangat.</p>
           </div>
           <form class="form" data-form="curahan" novalidate>
             <div class="field">
               <label for="c-nama">Nama Lengkap <em>*</em></label>
               <div class="input-wrap"><i class="ph ph-user"></i>
-                <input type="text" id="c-nama" name="nama" placeholder="Nama lengkap kamu" required />
+                <input type="text" id="c-nama" name="nama" placeholder="Nama lengkap Anda" required />
               </div><small class="err"></small>
             </div>
             <div class="field">
@@ -359,7 +364,7 @@
             <div class="field field--full">
               <label for="c-tanya">Pertanyaan <em>*</em></label>
               <div class="input-wrap input-wrap--area"><i class="ph ph-question"></i>
-                <textarea id="c-tanya" name="pertanyaan" rows="4" maxlength="500" placeholder="Tuliskan pertanyaanmu selengkap mungkin…" required></textarea>
+                <textarea id="c-tanya" name="pertanyaan" rows="4" maxlength="500" placeholder="Tuliskan pertanyaan Anda selengkap mungkin…" required></textarea>
               </div>
               <small class="hint"><span data-counter-for="c-tanya">0</span>/500 karakter</small>
               <small class="err"></small>
@@ -384,7 +389,7 @@
             <div class="field">
               <label for="t-nama">Nama Lengkap <em>*</em></label>
               <div class="input-wrap"><i class="ph ph-user"></i>
-                <input type="text" id="t-nama" name="nama" placeholder="Nama lengkap kamu" required />
+                <input type="text" id="t-nama" name="nama" placeholder="Nama lengkap Anda" required />
               </div><small class="err"></small>
             </div>
             <div class="field">
@@ -455,12 +460,13 @@
     <div class="footer-social">
       <h4>Ikuti Kalam Hati</h4>
       <div class="social-row">
-        <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram Kalam Hati" class="soc"><i class="ph-fill ph-instagram-logo"></i></a>
-        <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok Kalam Hati" class="soc"><i class="ph-fill ph-tiktok-logo"></i></a>
-        <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube Kalam Hati" class="soc"><i class="ph-fill ph-youtube-logo"></i></a>
-        <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook Kalam Hati" class="soc"><i class="ph-fill ph-facebook-logo"></i></a>
-        <a href="https://x.com/" target="_blank" rel="noopener" aria-label="X Kalam Hati" class="soc"><i class="ph-fill ph-x-logo"></i></a>
-        <a href="https://wa.me/" target="_blank" rel="noopener" aria-label="WhatsApp Kalam Hati" class="soc"><i class="ph-fill ph-whatsapp-logo"></i></a>
+        <!-- Ikon ditanam langsung dari berkas SVG di folder asset/, dengan
+             fill diganti currentColor supaya warnanya tetap mengikuti gaya
+             lama (emas, jadi ungu saat disorot). -->
+        <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="YouTube Kalam Hati" class="soc"><svg class="soc-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M22.0617 6.93984C21.9422 6.49462 21.7078 6.0886 21.382 5.76243C21.0563 5.43625 20.6505 5.20136 20.2055 5.08125C18.5672 4.64063 12 4.64062 12 4.64062C12 4.64062 5.43281 4.64062 3.79453 5.07891C3.34927 5.19862 2.94334 5.43339 2.61751 5.75962C2.29169 6.08586 2.05744 6.49208 1.93828 6.9375C1.5 8.57812 1.5 12 1.5 12C1.5 12 1.5 15.4219 1.93828 17.0602C2.17969 17.9648 2.89219 18.6773 3.79453 18.9188C5.43281 19.3594 12 19.3594 12 19.3594C12 19.3594 18.5672 19.3594 20.2055 18.9188C21.1102 18.6773 21.8203 17.9648 22.0617 17.0602C22.5 15.4219 22.5 12 22.5 12C22.5 12 22.5 8.57813 22.0617 6.93984ZM9.91406 15.1406V8.85938L15.3516 11.9766L9.91406 15.1406Z" fill="currentColor"/></svg></a>
+        <a href="https://wa.me/" target="_blank" rel="noopener" aria-label="WhatsApp Kalam Hati" class="soc"><svg class="soc-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><mask id="mask-wa" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="2" y="2" width="20" height="20"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.18398 21.331C2.16514 21.3988 2.16451 21.4704 2.18217 21.5385C2.19982 21.6066 2.23512 21.6689 2.28452 21.719C2.33392 21.7691 2.39566 21.8053 2.46351 21.8239C2.53137 21.8425 2.60293 21.8429 2.67098 21.825L7.27798 20.621C8.73967 21.4128 10.3757 21.8276 12.038 21.828H12.042C17.528 21.828 22 17.382 22 11.916C22.0034 10.6126 21.7475 9.32149 21.2472 8.11785C20.7469 6.91422 20.0123 5.8221 19.086 4.90505C18.1613 3.98046 17.0629 3.24782 15.854 2.74927C14.6451 2.25072 13.3496 1.9961 12.042 2.00005C6.55598 2.00005 2.08398 6.44604 2.08398 11.911C2.08398 13.65 2.54198 15.358 3.41398 16.865L2.18398 21.331ZM8.88598 7.17005C9.06898 7.17505 9.27198 7.18505 9.46498 7.61305C9.59298 7.89805 9.80798 8.42305 9.98398 8.85105C10.121 9.18405 10.233 9.45805 10.261 9.51405C10.326 9.64205 10.365 9.78905 10.281 9.96205L10.253 10.02C10.185 10.16 10.137 10.26 10.023 10.39L9.87998 10.56C9.79498 10.664 9.70998 10.766 9.63798 10.838C9.50898 10.966 9.37598 11.104 9.52398 11.36C9.67198 11.616 10.192 12.458 10.959 13.137C11.52 13.643 12.1636 14.0489 12.862 14.337C12.932 14.367 12.9887 14.3924 13.032 14.413C13.289 14.541 13.442 14.521 13.59 14.349C13.739 14.176 14.233 13.6 14.407 13.344C14.575 13.088 14.747 13.128 14.985 13.216C15.223 13.305 16.489 13.926 16.746 14.053L16.889 14.123C17.068 14.208 17.189 14.267 17.241 14.353C17.305 14.462 17.305 14.973 17.093 15.575C16.875 16.175 15.826 16.751 15.351 16.795L15.216 16.811C14.78 16.863 14.228 16.931 12.26 16.156C9.83398 15.202 8.23298 12.836 7.90998 12.357L7.85698 12.281L7.85198 12.273C7.70398 12.076 6.80298 10.871 6.80298 9.62705C6.80298 8.43705 7.38998 7.81705 7.65698 7.53505L7.70398 7.48505C7.79041 7.38742 7.896 7.30862 8.01419 7.25357C8.13238 7.19852 8.26064 7.16838 8.39098 7.16505C8.56398 7.16505 8.73798 7.16505 8.88598 7.17005Z" fill="white"/></mask><g mask="url(#mask-wa)"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.18398 21.331C2.16514 21.3988 2.16451 21.4704 2.18217 21.5385C2.19982 21.6066 2.23512 21.6689 2.28452 21.719C2.33392 21.7691 2.39566 21.8053 2.46351 21.8239C2.53137 21.8425 2.60293 21.8429 2.67098 21.825L7.27798 20.621C8.73967 21.4128 10.3757 21.8276 12.038 21.828H12.042C17.528 21.828 22 17.382 22 11.916C22.0034 10.6126 21.7475 9.32149 21.2472 8.11785C20.7469 6.91422 20.0123 5.8221 19.086 4.90505C18.1613 3.98046 17.0629 3.24782 15.854 2.74927C14.6451 2.25072 13.3496 1.9961 12.042 2.00005C6.55598 2.00005 2.08398 6.44604 2.08398 11.911C2.08398 13.65 2.54198 15.358 3.41398 16.865L2.18398 21.331ZM8.88598 7.17005C9.06898 7.17505 9.27198 7.18505 9.46498 7.61305C9.59298 7.89805 9.80798 8.42305 9.98398 8.85105C10.121 9.18405 10.233 9.45805 10.261 9.51405C10.326 9.64205 10.365 9.78905 10.281 9.96205L10.253 10.02C10.185 10.16 10.137 10.26 10.023 10.39L9.87998 10.56C9.79498 10.664 9.70998 10.766 9.63798 10.838C9.50898 10.966 9.37598 11.104 9.52398 11.36C9.67198 11.616 10.192 12.458 10.959 13.137C11.52 13.643 12.1636 14.0489 12.862 14.337C12.932 14.367 12.9887 14.3924 13.032 14.413C13.289 14.541 13.442 14.521 13.59 14.349C13.739 14.176 14.233 13.6 14.407 13.344C14.575 13.088 14.747 13.128 14.985 13.216C15.223 13.305 16.489 13.926 16.746 14.053L16.889 14.123C17.068 14.208 17.189 14.267 17.241 14.353C17.305 14.462 17.305 14.973 17.093 15.575C16.875 16.175 15.826 16.751 15.351 16.795L15.216 16.811C14.78 16.863 14.228 16.931 12.26 16.156C9.83398 15.202 8.23298 12.836 7.90998 12.357L7.85698 12.281L7.85198 12.273C7.70398 12.076 6.80298 10.871 6.80298 9.62705C6.80298 8.43705 7.38998 7.81705 7.65698 7.53505L7.70398 7.48505C7.79041 7.38742 7.896 7.30862 8.01419 7.25357C8.13238 7.19852 8.26064 7.16838 8.39098 7.16505C8.56398 7.16505 8.73798 7.16505 8.88598 7.17005Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></g></svg></a>
+        <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram Kalam Hati" class="soc"><svg class="soc-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 8.87531C10.2797 8.87531 8.87577 10.2792 8.87577 11.9995C8.87577 13.7198 10.2797 15.1237 12 15.1237C13.7203 15.1237 15.1242 13.7198 15.1242 11.9995C15.1242 10.2792 13.7203 8.87531 12 8.87531ZM21.3703 11.9995C21.3703 10.7058 21.382 9.42374 21.3094 8.13234C21.2367 6.63234 20.8945 5.30109 19.7976 4.20421C18.6984 3.10499 17.3695 2.76515 15.8695 2.69249C14.5758 2.61984 13.2937 2.63156 12.0023 2.63156C10.7086 2.63156 9.42655 2.61984 8.13515 2.69249C6.63515 2.76515 5.3039 3.10734 4.20702 4.20421C3.1078 5.30343 2.76796 6.63234 2.6953 8.13234C2.62265 9.42609 2.63436 10.7081 2.63436 11.9995C2.63436 13.2909 2.62265 14.5753 2.6953 15.8667C2.76796 17.3667 3.11015 18.698 4.20702 19.7948C5.30624 20.8941 6.63515 21.2339 8.13515 21.3066C9.4289 21.3792 10.7109 21.3675 12.0023 21.3675C13.2961 21.3675 14.5781 21.3792 15.8695 21.3066C17.3695 21.2339 18.7008 20.8917 19.7976 19.7948C20.8969 18.6956 21.2367 17.3667 21.3094 15.8667C21.3844 14.5753 21.3703 13.2933 21.3703 11.9995ZM12 16.8066C9.33983 16.8066 7.19296 14.6597 7.19296 11.9995C7.19296 9.33937 9.33983 7.19249 12 7.19249C14.6601 7.19249 16.807 9.33937 16.807 11.9995C16.807 14.6597 14.6601 16.8066 12 16.8066ZM17.0039 8.11827C16.3828 8.11827 15.8812 7.61671 15.8812 6.99562C15.8812 6.37453 16.3828 5.87296 17.0039 5.87296C17.625 5.87296 18.1266 6.37453 18.1266 6.99562C18.1267 7.1431 18.0978 7.28917 18.0415 7.42546C17.9851 7.56175 17.9024 7.68558 17.7981 7.78987C17.6939 7.89415 17.57 7.97684 17.4337 8.0332C17.2974 8.08955 17.1514 8.11846 17.0039 8.11827Z" fill="currentColor"/></svg></a>
+        <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok Kalam Hati" class="soc"><svg class="soc-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19.59 6.69C18.5932 6.47079 17.6914 5.94144 17.0141 5.17789C16.3368 4.41435 15.9188 3.45587 15.82 2.44V2H12.37V15.67C12.3707 16.2766 12.1806 16.868 11.8265 17.3604C11.4724 17.8529 10.9723 18.2215 10.3971 18.414C9.82187 18.6065 9.20068 18.6131 8.6215 18.4329C8.04232 18.2527 7.53452 17.8948 7.17002 17.41C6.84347 16.9808 6.64351 16.4689 6.59275 15.932C6.54199 15.3951 6.64247 14.8548 6.8828 14.372C7.12314 13.8892 7.49375 13.4834 7.95274 13.2003C8.41172 12.9172 8.94076 12.7681 9.48002 12.77C9.77819 12.7694 10.0748 12.8132 10.36 12.9V9.4C10.0283 9.35948 9.69412 9.34278 9.36002 9.35C8.12933 9.38288 6.93494 9.77393 5.92311 10.4753C4.91127 11.1766 4.12591 12.1578 3.6632 13.2986C3.20049 14.4395 3.0805 15.6905 3.31794 16.8986C3.55538 18.1066 4.13993 19.2191 5.00002 20.1C5.88151 20.9962 7.00952 21.6101 8.24072 21.8638C9.47192 22.1175 10.7507 21.9994 11.9147 21.5246C13.0786 21.0498 14.0752 20.2397 14.7776 19.1973C15.4801 18.1548 15.8569 16.9271 15.86 15.67V8.67C17.2515 9.66395 18.92 10.1956 20.63 10.19V6.79C20.2942 6.79034 19.9592 6.75683 19.63 6.69H19.59Z" fill="currentColor"/></svg></a>
       </div>
       <p class="social-handle">@kalamhati.tv</p>
     </div>
@@ -588,7 +594,7 @@
       <div class="field">
         <label for="d-nama">Nama Lengkap <em>*</em></label>
         <div class="input-wrap"><i class="ph ph-user"></i>
-          <input type="text" id="d-nama" name="nama" placeholder="Nama lengkap kamu" required />
+          <input type="text" id="d-nama" name="nama" placeholder="Nama lengkap Anda" required />
         </div><small class="err"></small>
       </div>
       <div class="field">
